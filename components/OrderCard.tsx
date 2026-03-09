@@ -1,0 +1,239 @@
+import React from "react";
+import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
+import { Image } from "expo-image";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Colors } from "@/constants/colors";
+import type { AliOrder } from "@/hooks/useOrders";
+
+interface OrderCardProps {
+  order: AliOrder;
+}
+
+function statusColor(status?: string): string {
+  switch (status) {
+    case "Payment Completed": return Colors.info;
+    case "Buyer Confirmed Receipt": return Colors.success;
+    case "Settled": return Colors.accent;
+    case "Void": return Colors.danger;
+    default: return Colors.textMuted;
+  }
+}
+
+function statusLabel(status?: string): string {
+  switch (status) {
+    case "Payment Completed": return "Paid";
+    case "Buyer Confirmed Receipt": return "Received";
+    case "Settled": return "Settled";
+    case "Void": return "Canceled";
+    default: return status || "Unknown";
+  }
+}
+
+function formatDate(ts?: string): string {
+  if (!ts) return "—";
+  const d = new Date(Number(ts));
+  if (isNaN(d.getTime())) return ts;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function calcCommission(amount?: string, rate?: string): string {
+  const a = parseFloat(amount || "0");
+  const r = parseFloat(rate || "0");
+  if (!a || !r) return "—";
+  return (a * r / 100).toFixed(2);
+}
+
+export function OrderCard({ order }: OrderCardProps) {
+  const commission = order.estimated_paid_amount || calcCommission(order.payment_amount, order.commission_rate);
+  const sColor = statusColor(order.status);
+
+  const handlePress = () => {
+    if (order.product_detail_url) {
+      Linking.openURL(order.product_detail_url);
+    }
+  };
+
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
+      onPress={handlePress}
+    >
+      <View style={styles.row}>
+        {order.product_main_image_url ? (
+          <Image
+            source={{ uri: order.product_main_image_url }}
+            style={styles.image}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Feather name="package" size={24} color={Colors.textMuted} />
+          </View>
+        )}
+
+        <View style={styles.info}>
+          <View style={styles.topRow}>
+            <View style={[styles.statusBadge, { backgroundColor: sColor + "22" }]}>
+              <Text style={[styles.statusText, { color: sColor }]}>
+                {statusLabel(order.status)}
+              </Text>
+            </View>
+            {order.ship_to_country && (
+              <Text style={styles.country}>{order.ship_to_country}</Text>
+            )}
+          </View>
+
+          <Text style={styles.title} numberOfLines={2}>
+            {order.product_title || `Order #${order.order_id}`}
+          </Text>
+
+          <View style={styles.metaRow}>
+            <Feather name="calendar" size={11} color={Colors.textMuted} />
+            <Text style={styles.meta}>
+              {formatDate(order.created_time || order.paid_time)}
+            </Text>
+          </View>
+
+          {order.tracking_id && (
+            <View style={styles.metaRow}>
+              <MaterialCommunityIcons name="tag-outline" size={11} color={Colors.textMuted} />
+              <Text style={styles.meta}>{order.tracking_id}</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.financialRow}>
+        <View style={styles.finItem}>
+          <Text style={styles.finLabel}>Payment</Text>
+          <Text style={styles.finValue}>
+            {order.payment_amount ? `$${parseFloat(order.payment_amount).toFixed(2)}` : "—"}
+          </Text>
+        </View>
+
+        <View style={styles.finSep} />
+
+        <View style={styles.finItem}>
+          <Text style={styles.finLabel}>Rate</Text>
+          <Text style={styles.finValue}>
+            {order.commission_rate ? `${order.commission_rate}%` : "—"}
+          </Text>
+        </View>
+
+        <View style={styles.finSep} />
+
+        <View style={styles.finItem}>
+          <Text style={styles.finLabel}>Commission</Text>
+          <Text style={[styles.finValue, { color: Colors.success }]}>
+            {commission !== "—" ? `$${parseFloat(commission).toFixed(2)}` : "—"}
+          </Text>
+        </View>
+
+        <Feather name="external-link" size={14} color={Colors.textMuted} style={{ alignSelf: "center" }} />
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    overflow: "hidden",
+  },
+  row: {
+    flexDirection: "row",
+    padding: 14,
+    gap: 12,
+  },
+  image: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    backgroundColor: Colors.surface,
+    flexShrink: 0,
+  },
+  imagePlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  info: {
+    flex: 1,
+    gap: 4,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.3,
+  },
+  country: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontFamily: "Inter_400Regular",
+  },
+  title: {
+    fontSize: 13,
+    color: Colors.text,
+    fontFamily: "Inter_500Medium",
+    lineHeight: 18,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  meta: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontFamily: "Inter_400Regular",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.cardBorder,
+    marginHorizontal: 14,
+  },
+  financialRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 4,
+  },
+  finItem: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  finLabel: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    fontFamily: "Inter_400Regular",
+  },
+  finValue: {
+    fontSize: 13,
+    color: Colors.text,
+    fontFamily: "Inter_600SemiBold",
+  },
+  finSep: {
+    width: 1,
+    height: 24,
+    backgroundColor: Colors.cardBorder,
+  },
+});
