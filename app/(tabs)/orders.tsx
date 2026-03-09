@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   Pressable,
   Platform,
 } from "react-native";
@@ -12,18 +11,7 @@ import { Colors } from "@/constants/colors";
 import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { Feather } from "@expo/vector-icons";
-
-function getMonthRange(monthOffset = 0): { start: string; end: string } {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + monthOffset;
-  const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
-  return {
-    start: String(start.getTime()),
-    end: String(end.getTime()),
-  };
-}
+import { getMonthDateRange, formatDateForApi } from "@/hooks/useOrders";
 
 const TABS = [
   { key: "paid", label: "Paid" },
@@ -36,8 +24,11 @@ export default function OrdersScreen() {
   const { isConfigured } = useSettings();
   const [activeTab, setActiveTab] = useState(0);
 
-  const thisMonth = getMonthRange(0);
-  const lastMonth = getMonthRange(-1);
+  const thisMonth = getMonthDateRange(0);
+  const lastMonth = getMonthDateRange(-1);
+  const now = new Date();
+  const last30 = formatDateForApi(new Date(now.getTime() - 30 * 24 * 3600 * 1000));
+  const nowStr = formatDateForApi(now);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -77,7 +68,10 @@ export default function OrdersScreen() {
         {activeTab === 0 && (
           <OrdersList
             status="Payment Completed"
-            emptyLabel="No paid orders waiting for delivery."
+            startTime={last30}
+            endTime={nowStr}
+            timeType="1"
+            emptyLabel="No paid orders waiting for delivery in the last 30 days."
           />
         )}
         {activeTab === 1 && (

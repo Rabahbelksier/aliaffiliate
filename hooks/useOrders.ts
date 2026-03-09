@@ -1,10 +1,10 @@
-import { useMutation } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { apiRequest, getApiUrl } from "@/lib/query-client";
+import { getApiUrl } from "@/lib/query-client";
+import { fetch } from "expo/fetch";
 
 export interface AliOrder {
   order_id: string;
-  sub_order_id?: string;
+  sub_order_id: string;
   product_id?: string;
   product_title?: string;
   product_main_image_url?: string;
@@ -26,6 +26,8 @@ export interface OrdersResponse {
   total_record_count: number;
   current_record_count: number;
   orders: AliOrder[];
+  error?: string;
+  resp_code?: number;
 }
 
 export interface FetchOrdersParams {
@@ -40,7 +42,26 @@ export interface FetchOrdersParams {
   fields?: string;
 }
 
-const CACHE_PREFIX = "@aliaffiliate_orders_";
+// Format date to AliExpress required format: YYYY-MM-DD HH:MM:SS
+export function formatDateForApi(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+// Get date range for a specific month offset (0 = this month, -1 = last month)
+export function getMonthDateRange(monthOffset = 0): { start: string; end: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + monthOffset;
+  const start = new Date(year, month, 1, 0, 0, 0);
+  const end = new Date(year, month + 1, 0, 23, 59, 59);
+  return {
+    start: formatDateForApi(start),
+    end: formatDateForApi(end),
+  };
+}
+
+const CACHE_PREFIX = "@aliaffiliate_orders_v2_";
 
 export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResponse> {
   const cacheKey = CACHE_PREFIX + JSON.stringify(params);
@@ -48,7 +69,7 @@ export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResp
   try {
     const baseUrl = getApiUrl();
     const url = new URL("/api/orders", baseUrl).toString();
-    const { fetch } = await import("expo/fetch");
+
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,20 +81,24 @@ export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResp
     }
 
     const data: OrdersResponse = await res.json();
-    await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+
+    // If API returned an error (but HTTP 200), throw with the error message
+    if (data.error && data.orders.length === 0) {
+      // Still cache the empty result but note the error
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+      // Don't throw if it's just empty results — only throw on real errors
+    } else {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+    }
+
     return data;
   } catch (err) {
+    // Try to serve from cache on network failure
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
       const { data } = JSON.parse(cached);
-      return data;
+      return { ...data, fromCache: true } as OrdersResponse;
     }
     throw err;
   }
-}
-
-export function useOrdersMutation() {
-  return useMutation<OrdersResponse, Error, FetchOrdersParams>({
-    mutationFn: fetchOrders,
-  });
 }

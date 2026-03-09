@@ -12,7 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { OrderCard } from "@/components/OrderCard";
 import { useSettings } from "@/context/SettingsContext";
-import { fetchOrders, type AliOrder, type FetchOrdersParams } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, type FetchOrdersParams, formatDateForApi } from "@/hooks/useOrders";
 
 interface OrdersListProps {
   status: string;
@@ -32,12 +32,18 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
 
   const load = useCallback(async (page: number, refresh = false) => {
     setError(null);
+    setApiError(null);
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
+
+    // Default: last 30 days
+    const now = new Date();
+    const defaultStart = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
 
     const params: FetchOrdersParams = {
       app_key: settings.app_key,
@@ -45,21 +51,26 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
       status,
       page_no: page,
       page_size: PAGE_SIZE,
-      fields: "order_id,sub_order_id,product_id,product_title,product_main_image_url,product_detail_url,product_count,payment_amount,settled_currency,commission_rate,estimated_paid_amount,created_time,paid_time,finished_time,tracking_id,status,ship_to_country",
+      time_type: timeType || "1",
+      start_time: startTime || formatDateForApi(defaultStart),
+      end_time: endTime || formatDateForApi(now),
     };
-
-    if (startTime) params.start_time = startTime;
-    if (endTime) params.end_time = endTime;
-    if (timeType) params.time_type = timeType;
 
     try {
       const data = await fetchOrders(params);
-      setOrders(data.orders || []);
-      setTotalCount(data.total_record_count || 0);
-      setPageNo(page);
+
+      if (data.error && data.orders.length === 0) {
+        setApiError(data.error);
+        setOrders([]);
+        setTotalCount(0);
+      } else {
+        setOrders(data.orders || []);
+        setTotalCount(data.total_record_count || 0);
+        setPageNo(page);
+      }
       setHasFetched(true);
     } catch (err: any) {
-      setError(err?.message || "Failed to load orders");
+      setError(err?.message || "Failed to load orders. Check your internet connection.");
       setHasFetched(true);
     } finally {
       setIsLoading(false);
@@ -71,15 +82,16 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
     load(1);
   }, [load]);
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const renderEmpty = () => {
     if (isLoading || !hasFetched) return null;
+
     if (error) {
       return (
         <View style={styles.emptyContainer}>
-          <Feather name="alert-circle" size={40} color={Colors.danger} />
-          <Text style={styles.emptyTitle}>Error loading orders</Text>
+          <Feather name="wifi-off" size={40} color={Colors.danger} />
+          <Text style={styles.emptyTitle}>Connection Error</Text>
           <Text style={styles.emptyText}>{error}</Text>
           <Pressable style={styles.retryBtn} onPress={() => load(1)}>
             <Text style={styles.retryText}>Try again</Text>
@@ -87,6 +99,21 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
         </View>
       );
     }
+
+    if (apiError) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Feather name="alert-circle" size={40} color={Colors.warning} />
+          <Text style={styles.emptyTitle}>API Response</Text>
+          <Text style={styles.emptyText}>{apiError}</Text>
+          <Pressable style={styles.retryBtn} onPress={() => load(1)}>
+            <Feather name="refresh-cw" size={14} color="#fff" />
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.emptyContainer}>
         <Feather name="inbox" size={48} color={Colors.textMuted} />
@@ -100,32 +127,34 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
     <View style={styles.footer}>
       {totalCount > 0 && (
         <Text style={styles.countText}>
-          {orders.length} of {totalCount} orders
+          Showing {orders.length} of {totalCount} orders
         </Text>
       )}
-      <View style={styles.paginationRow}>
-        <Pressable
-          style={[styles.pageBtn, pageNo <= 1 && styles.pageBtnDisabled]}
-          onPress={() => pageNo > 1 && load(pageNo - 1)}
-          disabled={pageNo <= 1}
-        >
-          <Feather name="chevron-left" size={18} color={pageNo <= 1 ? Colors.textMuted : Colors.text} />
-          <Text style={[styles.pageBtnText, pageNo <= 1 && { color: Colors.textMuted }]}>Prev</Text>
-        </Pressable>
+      {totalPages > 1 && (
+        <View style={styles.paginationRow}>
+          <Pressable
+            style={[styles.pageBtn, pageNo <= 1 && styles.pageBtnDisabled]}
+            onPress={() => pageNo > 1 && load(pageNo - 1)}
+            disabled={pageNo <= 1 || isLoading}
+          >
+            <Feather name="chevron-left" size={18} color={pageNo <= 1 ? Colors.textMuted : Colors.text} />
+            <Text style={[styles.pageBtnText, pageNo <= 1 && { color: Colors.textMuted }]}>Prev</Text>
+          </Pressable>
 
-        <View style={styles.pageInfo}>
-          <Text style={styles.pageInfoText}>{pageNo} / {Math.max(totalPages, 1)}</Text>
+          <View style={styles.pageInfo}>
+            <Text style={styles.pageInfoText}>{pageNo} / {totalPages}</Text>
+          </View>
+
+          <Pressable
+            style={[styles.pageBtn, pageNo >= totalPages && styles.pageBtnDisabled]}
+            onPress={() => pageNo < totalPages && load(pageNo + 1)}
+            disabled={pageNo >= totalPages || isLoading}
+          >
+            <Text style={[styles.pageBtnText, pageNo >= totalPages && { color: Colors.textMuted }]}>Next</Text>
+            <Feather name="chevron-right" size={18} color={pageNo >= totalPages ? Colors.textMuted : Colors.text} />
+          </Pressable>
         </View>
-
-        <Pressable
-          style={[styles.pageBtn, pageNo >= totalPages && styles.pageBtnDisabled]}
-          onPress={() => pageNo < totalPages && load(pageNo + 1)}
-          disabled={pageNo >= totalPages}
-        >
-          <Text style={[styles.pageBtnText, pageNo >= totalPages && { color: Colors.textMuted }]}>Next</Text>
-          <Feather name="chevron-right" size={18} color={pageNo >= totalPages ? Colors.textMuted : Colors.text} />
-        </Pressable>
-      </View>
+      )}
     </View>
   );
 
@@ -138,7 +167,7 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
       )}
       <FlatList
         data={orders}
-        keyExtractor={(item, idx) => item.order_id + idx}
+        keyExtractor={(item, idx) => `${item.order_id}_${item.sub_order_id}_${idx}`}
         renderItem={({ item }) => <OrderCard order={item} />}
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={orders.length > 0 ? renderFooter : null}
@@ -197,6 +226,9 @@ const styles = StyleSheet.create({
   },
   retryBtn: {
     marginTop: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: 24,
     paddingVertical: 10,
     backgroundColor: Colors.primary,

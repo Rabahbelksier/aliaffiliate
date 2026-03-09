@@ -5,11 +5,16 @@ import { Colors } from "@/constants/colors";
 import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { Feather } from "@expo/vector-icons";
+import { formatDateForApi } from "@/hooks/useOrders";
 
 export default function SettledScreen() {
   const insets = useSafeAreaInsets();
   const { isConfigured } = useSettings();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const now = new Date();
+  const last30 = formatDateForApi(new Date(now.getTime() - 30 * 24 * 3600 * 1000));
+  const nowStr = formatDateForApi(now);
 
   if (!isConfigured) {
     return (
@@ -33,7 +38,10 @@ export default function SettledScreen() {
       </View>
       <OrdersList
         status="Settled"
-        emptyLabel="No settled orders yet. Settled orders appear after commissions are confirmed."
+        startTime={last30}
+        endTime={nowStr}
+        timeType="1"
+        emptyLabel="No settled orders in the last 30 days. Settled orders appear after commissions are confirmed by AliExpress."
       />
     </View>
   );

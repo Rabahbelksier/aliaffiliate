@@ -13,19 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
-import { fetchOrders, type AliOrder } from "@/hooks/useOrders";
-
-function getMonthRange(monthOffset = 0): { start: string; end: string } {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + monthOffset;
-  const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
-  return {
-    start: String(start.getTime()),
-    end: String(end.getTime()),
-  };
-}
+import { fetchOrders, type AliOrder, getMonthDateRange, formatDateForApi } from "@/hooks/useOrders";
 
 interface DashboardData {
   paid: { count: number; commission: number };
@@ -65,18 +53,25 @@ export default function DashboardScreen() {
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
-    const thisMonth = getMonthRange(0);
-    const lastMonth = getMonthRange(-1);
-    const base = { app_key: settings.app_key, app_secret: settings.app_secret, page_size: 50 };
-    const fields = "order_id,estimated_paid_amount,commission_rate,payment_amount,status,created_time,paid_time";
+    const thisMonth = getMonthDateRange(0);
+    const lastMonth = getMonthDateRange(-1);
+    const now = new Date();
+    const last30 = formatDateForApi(new Date(now.getTime() - 30 * 24 * 3600 * 1000));
+    const nowStr = formatDateForApi(now);
+
+    const base = {
+      app_key: settings.app_key,
+      app_secret: settings.app_secret,
+      page_size: 50,
+    };
 
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
-        fetchOrders({ ...base, status: "Payment Completed", fields }),
-        fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: thisMonth.start, end_time: thisMonth.end, time_type: "1", fields }),
-        fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "1", fields }),
-        fetchOrders({ ...base, status: "Settled", fields }),
-        fetchOrders({ ...base, status: "Void", fields }),
+        fetchOrders({ ...base, status: "Payment Completed", start_time: last30, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: thisMonth.start, end_time: thisMonth.end, time_type: "1" }),
+        fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "1" }),
+        fetchOrders({ ...base, status: "Settled", start_time: last30, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Invalid", start_time: last30, end_time: nowStr }),
       ]);
 
       const paid = paidRes.status === "fulfilled" ? paidRes.value : { orders: [], total_record_count: 0 };
@@ -94,7 +89,7 @@ export default function DashboardScreen() {
       });
       setLastUpdated(new Date());
     } catch (err: any) {
-      setError("Failed to load dashboard data");
+      setError("Failed to load dashboard. Check your credentials.");
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -138,9 +133,9 @@ export default function DashboardScreen() {
           <Text style={styles.greeting}>Overview</Text>
           <Text style={styles.title}>AliAffiliate</Text>
         </View>
-        <View style={[styles.badge, { backgroundColor: Colors.primary + "22" }]}>
+        <View style={[styles.badge, { backgroundColor: Colors.success + "22" }]}>
           <View style={[styles.badgeDot, { backgroundColor: Colors.success }]} />
-          <Text style={[styles.badgeText, { color: Colors.primary }]}>Live</Text>
+          <Text style={[styles.badgeText, { color: Colors.success }]}>Live</Text>
         </View>
       </View>
 
@@ -152,7 +147,7 @@ export default function DashboardScreen() {
 
       {isLoading && (
         <View style={styles.loadingRow}>
-          <ActivityIndicator color={Colors.primary} />
+          <ActivityIndicator color={Colors.primary} size="small" />
           <Text style={styles.loadingText}>Fetching data…</Text>
         </View>
       )}
