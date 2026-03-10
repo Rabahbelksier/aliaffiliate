@@ -22,7 +22,9 @@ After live testing the AliExpress API, the correct details are:
 - **Response key**: `aliexpress_affiliate_order_list_response`
 - **Date format**: `YYYY-MM-DD HH:MM:SS` (NOT timestamps)
 - **Time limit**: Max 180-day range per request (we use 5 months / ~150 days by default)
-- **Valid status values**: "Payment Completed", "Buyer Confirmed Receipt", "Invalid" (canceled)
+- **Valid status values**: "Payment Completed", "Buyer Confirmed Receipt", "Completed Settlement" (settled), "Invalid" (canceled)
+- **Note**: "Settled" is NOT a valid status — use "Completed Settlement" instead
+- **Order lookup by ID**: Use `aliexpress.affiliate.order.get` with `order_ids` (sub_order_id, NOT parent order_id)
 - **Endpoint**: `https://api-sg.aliexpress.com/sync`
 
 ### Field name mapping (API → App)
@@ -47,7 +49,7 @@ After live testing the AliExpress API, the correct details are:
 
 Accepts:
 - `app_key`, `app_secret` (required)
-- `status`: "Payment Completed" | "Buyer Confirmed Receipt" | "Invalid" | "Settled"
+- `status`: "Payment Completed" | "Buyer Confirmed Receipt" | "Completed Settlement" | "Invalid"
 - `start_time`, `end_time`: YYYY-MM-DD HH:MM:SS (defaults to last 30 days)
 - `time_type`: "1" (by paid time), default
 - `page_no`, `page_size`

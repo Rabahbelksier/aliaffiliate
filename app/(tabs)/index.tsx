@@ -70,7 +70,7 @@ export default function DashboardScreen() {
         fetchOrders({ ...base, status: "Payment Completed", start_time: last5Months.start, end_time: nowStr }),
         fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: thisMonth.start, end_time: thisMonth.end, time_type: "1" }),
         fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "1" }),
-        fetchOrders({ ...base, status: "Settled", start_time: last5Months.start, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Completed Settlement", start_time: last5Months.start, end_time: nowStr }),
         fetchOrders({ ...base, status: "Invalid", start_time: last5Months.start, end_time: nowStr }),
       ]);
 

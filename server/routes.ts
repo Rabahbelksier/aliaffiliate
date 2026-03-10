@@ -182,43 +182,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/order-lookup", async (req: Request, res: Response) => {
-    try {
-      const { app_key, app_secret, order_ids } = req.body;
-
-      if (!app_key || !app_secret || !order_ids) {
-        return res.status(400).json({ error: "app_key, app_secret, and order_ids are required" });
-      }
-
-      const timestamp = String(Date.now());
-
-      const params: Record<string, string> = {
-        app_key,
-        timestamp,
-        sign_method: "md5",
-        v: "2.0",
-        method: "aliexpress.affiliate.order.get",
-        order_ids: String(order_ids),
-      };
-
-      params.sign = generateSign(params, app_secret);
-
-      const postData = Object.entries(params)
-        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-        .join("&");
-
-      console.log("Looking up order with aliexpress.affiliate.order.get, order_ids:", order_ids);
-      const responseText = await httpPost(postData);
-      const responseJson = JSON.parse(responseText);
-      console.log("Order lookup raw response:", JSON.stringify(responseJson).substring(0, 2000));
-
-      return res.json(responseJson);
-    } catch (error) {
-      console.error("Order lookup error:", error);
-      res.status(500).json({ error: String(error) });
-    }
-  });
-
   const httpServer = createServer(app);
   return httpServer;
 }

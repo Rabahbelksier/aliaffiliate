@@ -35,7 +35,7 @@ export default function SettledScreen() {
         </View>
       </View>
       <OrdersList
-        status="Settled"
+        status="Completed Settlement"
         startTime={last5Months.start}
         endTime={last5Months.end}
         timeType="1"
