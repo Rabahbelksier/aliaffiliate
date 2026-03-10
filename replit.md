@@ -13,6 +13,7 @@ Mobile app to track AliExpress Affiliate orders, view commissions, and analyze p
 - **State**: AsyncStorage for offline caching + React Query for data fetching
 - **Navigation**: Bottom tabs (Dashboard, Orders, Settled, Canceled, Settings)
 - **API Keys**: Each user provides their own `app_key` and `app_secret` via the Settings screen, stored locally on device via AsyncStorage
+- **i18n**: Bilingual support (Arabic/English) via LanguageContext, default is Arabic, switchable in Settings
 
 ## API Integration — Key Findings
 
@@ -74,6 +75,7 @@ components/
   OrdersList.tsx        # Paginated orders list with refresh
 context/
   SettingsContext.tsx   # AsyncStorage-backed settings context
+  LanguageContext.tsx   # Bilingual i18n (Arabic/English) with RTL support
 hooks/
   useOrders.ts          # fetchOrders with offline cache fallback + date utils
 server/

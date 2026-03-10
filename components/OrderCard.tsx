@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
 import { Image } from "expo-image";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
+import { useLanguage } from "@/context/LanguageContext";
 import type { AliOrder } from "@/hooks/useOrders";
 
 interface OrderCardProps {
@@ -13,35 +14,37 @@ function statusColor(status?: string): string {
   switch (status) {
     case "Payment Completed": return Colors.info;
     case "Buyer Confirmed Receipt": return Colors.success;
+    case "Completed Settlement": return Colors.accent;
     case "Settled": return Colors.accent;
+    case "Invalid": return Colors.danger;
     case "Void": return Colors.danger;
     default: return Colors.textMuted;
   }
 }
 
-function statusLabel(status?: string): string {
+function statusLabel(status?: string, t?: (key: string) => string): string {
+  const translate = t || ((k: string) => k);
   switch (status) {
-    case "Payment Completed": return "Paid";
-    case "Buyer Confirmed Receipt": return "Received";
-    case "Settled": return "Settled";
-    case "Void": return "Canceled";
-    default: return status || "Unknown";
+    case "Payment Completed": return translate("orderCard.paid");
+    case "Buyer Confirmed Receipt": return translate("orderCard.received");
+    case "Completed Settlement": return translate("orderCard.settled");
+    case "Settled": return translate("orderCard.settled");
+    case "Invalid": return translate("orderCard.canceled");
+    case "Void": return translate("orderCard.canceled");
+    default: return status || translate("orderCard.unknown");
   }
 }
 
-function formatDate(ts?: string): string {
+function formatDate(ts?: string, locale?: string): string {
   if (!ts) return "—";
-  // Handle AliExpress date strings like "2026-03-07 01:44:32"
-  // Replace the space with 'T' for proper ISO parsing, or just parse directly
   const normalized = ts.includes("T") ? ts : ts.replace(" ", "T");
   const d = new Date(normalized);
   if (!isNaN(d.getTime())) {
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return d.toLocaleDateString(locale || "en-US", { month: "short", day: "numeric", year: "numeric" });
   }
-  // Fallback: try as numeric timestamp
   const ms = Number(ts);
   if (!isNaN(ms) && ms > 1e10) {
-    return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return new Date(ms).toLocaleDateString(locale || "en-US", { month: "short", day: "numeric", year: "numeric" });
   }
   return ts;
 }
@@ -54,8 +57,10 @@ function calcCommission(amount?: string, rate?: string): string {
 }
 
 export function OrderCard({ order }: OrderCardProps) {
+  const { t, isRTL } = useLanguage();
   const commission = order.estimated_paid_amount || calcCommission(order.payment_amount, order.commission_rate);
   const sColor = statusColor(order.status);
+  const locale = isRTL ? "ar-SA" : "en-US";
 
   const handlePress = () => {
     if (order.product_detail_url) {
@@ -68,7 +73,7 @@ export function OrderCard({ order }: OrderCardProps) {
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.9 : 1 }]}
       onPress={handlePress}
     >
-      <View style={styles.row}>
+      <View style={[styles.row, isRTL && { flexDirection: "row-reverse" }]}>
         {order.product_main_image_url ? (
           <Image
             source={{ uri: order.product_main_image_url }}
@@ -83,10 +88,10 @@ export function OrderCard({ order }: OrderCardProps) {
         )}
 
         <View style={styles.info}>
-          <View style={styles.topRow}>
+          <View style={[styles.topRow, isRTL && { flexDirection: "row-reverse" }]}>
             <View style={[styles.statusBadge, { backgroundColor: sColor + "22" }]}>
               <Text style={[styles.statusText, { color: sColor }]}>
-                {statusLabel(order.status)}
+                {statusLabel(order.status, t)}
               </Text>
             </View>
             {order.ship_to_country && (
@@ -94,19 +99,19 @@ export function OrderCard({ order }: OrderCardProps) {
             )}
           </View>
 
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={[styles.title, { textAlign: isRTL ? "right" : "left" }]} numberOfLines={2}>
             {order.product_title || `Order #${order.order_id}`}
           </Text>
 
-          <View style={styles.metaRow}>
+          <View style={[styles.metaRow, isRTL && { flexDirection: "row-reverse" }]}>
             <Feather name="calendar" size={11} color={Colors.textMuted} />
             <Text style={styles.meta}>
-              {formatDate(order.created_time || order.paid_time)}
+              {formatDate(order.created_time || order.paid_time, locale)}
             </Text>
           </View>
 
           {order.tracking_id && (
-            <View style={styles.metaRow}>
+            <View style={[styles.metaRow, isRTL && { flexDirection: "row-reverse" }]}>
               <MaterialCommunityIcons name="tag-outline" size={11} color={Colors.textMuted} />
               <Text style={styles.meta}>{order.tracking_id}</Text>
             </View>
@@ -116,9 +121,9 @@ export function OrderCard({ order }: OrderCardProps) {
 
       <View style={styles.divider} />
 
-      <View style={styles.financialRow}>
+      <View style={[styles.financialRow, isRTL && { flexDirection: "row-reverse" }]}>
         <View style={styles.finItem}>
-          <Text style={styles.finLabel}>Payment</Text>
+          <Text style={styles.finLabel}>{t("orderCard.payment")}</Text>
           <Text style={styles.finValue}>
             {order.payment_amount ? `$${parseFloat(order.payment_amount).toFixed(2)}` : "—"}
           </Text>
@@ -127,7 +132,7 @@ export function OrderCard({ order }: OrderCardProps) {
         <View style={styles.finSep} />
 
         <View style={styles.finItem}>
-          <Text style={styles.finLabel}>Rate</Text>
+          <Text style={styles.finLabel}>{t("orderCard.rate")}</Text>
           <Text style={styles.finValue}>
             {order.commission_rate
               ? order.commission_rate.includes("%")
@@ -140,7 +145,7 @@ export function OrderCard({ order }: OrderCardProps) {
         <View style={styles.finSep} />
 
         <View style={styles.finItem}>
-          <Text style={styles.finLabel}>Commission</Text>
+          <Text style={styles.finLabel}>{t("orderCard.commission")}</Text>
           <Text style={[styles.finValue, { color: Colors.success }]}>
             {commission !== "—" ? `$${parseFloat(commission).toFixed(2)}` : "—"}
           </Text>

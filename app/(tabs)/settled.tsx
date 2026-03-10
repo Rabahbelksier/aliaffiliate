@@ -4,13 +4,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Feather } from "@expo/vector-icons";
 import { getLast5MonthsRange } from "@/hooks/useOrders";
 
 export default function SettledScreen() {
   const insets = useSafeAreaInsets();
   const { isConfigured } = useSettings();
+  const { t, isRTL } = useLanguage();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
   const last5Months = getLast5MonthsRange();
 
@@ -18,20 +21,18 @@ export default function SettledScreen() {
     return (
       <View style={[styles.unconfigured, { paddingTop: topPad + 20 }]}>
         <Feather name="settings" size={52} color={Colors.textMuted} />
-        <Text style={styles.unconfiguredTitle}>Setup Required</Text>
-        <Text style={styles.unconfiguredText}>
-          Enter your API credentials in Settings to view settled orders.
-        </Text>
+        <Text style={styles.unconfiguredTitle}>{t("dashboard.setupRequired")}</Text>
+        <Text style={styles.unconfiguredText}>{t("settled.setupText")}</Text>
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Settled</Text>
+      <View style={[styles.header, isRTL && { flexDirection: "row-reverse" }]}>
+        <Text style={[styles.title, { textAlign }]}>{t("settled.title")}</Text>
         <View style={[styles.badge, { backgroundColor: Colors.accent + "22" }]}>
-          <Text style={[styles.badgeText, { color: Colors.accent }]}>Completed</Text>
+          <Text style={[styles.badgeText, { color: Colors.accent }]}>{t("settled.badge")}</Text>
         </View>
       </View>
       <OrdersList
@@ -39,7 +40,7 @@ export default function SettledScreen() {
         startTime={last5Months.start}
         endTime={last5Months.end}
         timeType="1"
-        emptyLabel="No settled orders in the last 5 months. Settled orders appear after commissions are confirmed by AliExpress."
+        emptyLabel={t("settled.empty")}
       />
     </View>
   );

@@ -12,6 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { OrderCard } from "@/components/OrderCard";
 import { useSettings } from "@/context/SettingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { fetchOrders, type AliOrder, type FetchOrdersParams, formatDateForApi } from "@/hooks/useOrders";
 
 interface OrdersListProps {
@@ -26,6 +27,7 @@ const PAGE_SIZE = 10;
 
 export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }: OrdersListProps) {
   const { settings } = useSettings();
+  const { t, isRTL } = useLanguage();
   const [orders, setOrders] = useState<AliOrder[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [pageNo, setPageNo] = useState(1);
@@ -41,7 +43,6 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
-    // Default: last 30 days
     const now = new Date();
     const defaultStart = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
 
@@ -70,7 +71,7 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
       }
       setHasFetched(true);
     } catch (err: any) {
-      setError(err?.message || "Failed to load orders. Check your internet connection.");
+      setError(err?.message || t("dashboard.error"));
       setHasFetched(true);
     } finally {
       setIsLoading(false);
@@ -91,10 +92,10 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
       return (
         <View style={styles.emptyContainer}>
           <Feather name="wifi-off" size={40} color={Colors.danger} />
-          <Text style={styles.emptyTitle}>Connection Error</Text>
+          <Text style={styles.emptyTitle}>{t("ordersList.connectionError")}</Text>
           <Text style={styles.emptyText}>{error}</Text>
           <Pressable style={styles.retryBtn} onPress={() => load(1)}>
-            <Text style={styles.retryText}>Try again</Text>
+            <Text style={styles.retryText}>{t("ordersList.tryAgain")}</Text>
           </Pressable>
         </View>
       );
@@ -104,11 +105,11 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
       return (
         <View style={styles.emptyContainer}>
           <Feather name="alert-circle" size={40} color={Colors.warning} />
-          <Text style={styles.emptyTitle}>API Response</Text>
+          <Text style={styles.emptyTitle}>{t("ordersList.apiResponse")}</Text>
           <Text style={styles.emptyText}>{apiError}</Text>
           <Pressable style={styles.retryBtn} onPress={() => load(1)}>
             <Feather name="refresh-cw" size={14} color="#fff" />
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t("ordersList.retry")}</Text>
           </Pressable>
         </View>
       );
@@ -117,8 +118,8 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
     return (
       <View style={styles.emptyContainer}>
         <Feather name="inbox" size={48} color={Colors.textMuted} />
-        <Text style={styles.emptyTitle}>No orders found</Text>
-        <Text style={styles.emptyText}>{emptyLabel || "No orders match this filter."}</Text>
+        <Text style={styles.emptyTitle}>{t("ordersList.noOrders")}</Text>
+        <Text style={styles.emptyText}>{emptyLabel || t("ordersList.noMatch")}</Text>
       </View>
     );
   };
@@ -127,18 +128,18 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
     <View style={styles.footer}>
       {totalCount > 0 && (
         <Text style={styles.countText}>
-          Showing {orders.length} of {totalCount} orders
+          {t("ordersList.showing")} {orders.length} {t("ordersList.of")} {totalCount} {t("ordersList.orders")}
         </Text>
       )}
       {totalPages > 1 && (
-        <View style={styles.paginationRow}>
+        <View style={[styles.paginationRow, isRTL && { flexDirection: "row-reverse" }]}>
           <Pressable
             style={[styles.pageBtn, pageNo <= 1 && styles.pageBtnDisabled]}
             onPress={() => pageNo > 1 && load(pageNo - 1)}
             disabled={pageNo <= 1 || isLoading}
           >
-            <Feather name="chevron-left" size={18} color={pageNo <= 1 ? Colors.textMuted : Colors.text} />
-            <Text style={[styles.pageBtnText, pageNo <= 1 && { color: Colors.textMuted }]}>Prev</Text>
+            <Feather name={isRTL ? "chevron-right" : "chevron-left"} size={18} color={pageNo <= 1 ? Colors.textMuted : Colors.text} />
+            <Text style={[styles.pageBtnText, pageNo <= 1 && { color: Colors.textMuted }]}>{t("ordersList.prev")}</Text>
           </Pressable>
 
           <View style={styles.pageInfo}>
@@ -150,8 +151,8 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
             onPress={() => pageNo < totalPages && load(pageNo + 1)}
             disabled={pageNo >= totalPages || isLoading}
           >
-            <Text style={[styles.pageBtnText, pageNo >= totalPages && { color: Colors.textMuted }]}>Next</Text>
-            <Feather name="chevron-right" size={18} color={pageNo >= totalPages ? Colors.textMuted : Colors.text} />
+            <Text style={[styles.pageBtnText, pageNo >= totalPages && { color: Colors.textMuted }]}>{t("ordersList.next")}</Text>
+            <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={18} color={pageNo >= totalPages ? Colors.textMuted : Colors.text} />
           </Pressable>
         </View>
       )}

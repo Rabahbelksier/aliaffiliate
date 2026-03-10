@@ -10,18 +10,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/colors";
 import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Feather } from "@expo/vector-icons";
 import { getMonthDateRange, getLast5MonthsRange } from "@/hooks/useOrders";
-
-const TABS = [
-  { key: "paid", label: "Paid" },
-  { key: "received_this_month", label: "This Month" },
-  { key: "received_last_month", label: "Last Month" },
-];
 
 export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
   const { isConfigured } = useSettings();
+  const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState(0);
 
   const thisMonth = getMonthDateRange(0);
@@ -29,15 +25,20 @@ export default function OrdersScreen() {
   const last5Months = getLast5MonthsRange();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const textAlign = isRTL ? ("right" as const) : ("left" as const);
+
+  const TABS = [
+    { key: "paid", label: t("orders.badge") },
+    { key: "received_this_month", label: t("commission.thisMonth") },
+    { key: "received_last_month", label: t("commission.lastMonth") },
+  ];
 
   if (!isConfigured) {
     return (
       <View style={[styles.unconfigured, { paddingTop: topPad + 20 }]}>
         <Feather name="settings" size={52} color={Colors.textMuted} />
-        <Text style={styles.unconfiguredTitle}>Setup Required</Text>
-        <Text style={styles.unconfiguredText}>
-          Enter your API credentials in Settings to view orders.
-        </Text>
+        <Text style={styles.unconfiguredTitle}>{t("dashboard.setupRequired")}</Text>
+        <Text style={styles.unconfiguredText}>{t("orders.setupText")}</Text>
       </View>
     );
   }
@@ -45,10 +46,10 @@ export default function OrdersScreen() {
   return (
     <View style={[styles.container, { paddingTop: topPad }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Orders</Text>
+        <Text style={[styles.title, { textAlign }]}>{t("orders.title")}</Text>
       </View>
 
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, isRTL && { flexDirection: "row-reverse" }]}>
         {TABS.map((tab, i) => (
           <Pressable
             key={tab.key}
@@ -69,7 +70,7 @@ export default function OrdersScreen() {
             startTime={last5Months.start}
             endTime={last5Months.end}
             timeType="1"
-            emptyLabel="No paid orders waiting for delivery in the last 5 months."
+            emptyLabel={t("orders.empty")}
           />
         )}
         {activeTab === 1 && (
@@ -78,7 +79,7 @@ export default function OrdersScreen() {
             startTime={thisMonth.start}
             endTime={thisMonth.end}
             timeType="1"
-            emptyLabel="No received orders this month."
+            emptyLabel={t("orders.empty")}
           />
         )}
         {activeTab === 2 && (
@@ -87,7 +88,7 @@ export default function OrdersScreen() {
             startTime={lastMonth.start}
             endTime={lastMonth.end}
             timeType="1"
-            emptyLabel="No received orders last month."
+            emptyLabel={t("orders.empty")}
           />
         )}
       </View>

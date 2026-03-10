@@ -6,35 +6,38 @@ import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Colors } from "@/constants/colors";
+import { useLanguage } from "@/context/LanguageContext";
 
 function NativeTabLayout() {
+  const { t } = useLanguage();
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
-        <Label>Dashboard</Label>
+        <Label>{t("tab.dashboard")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="orders">
         <Icon sf={{ default: "list.bullet.rectangle", selected: "list.bullet.rectangle.fill" }} />
-        <Label>Orders</Label>
+        <Label>{t("tab.orders")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settled">
         <Icon sf={{ default: "checkmark.seal", selected: "checkmark.seal.fill" }} />
-        <Label>Settled</Label>
+        <Label>{t("tab.settled")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="canceled">
         <Icon sf={{ default: "xmark.circle", selected: "xmark.circle.fill" }} />
-        <Label>Canceled</Label>
+        <Label>{t("tab.canceled")}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} />
-        <Label>Settings</Label>
+        <Label>{t("tab.settings")}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
 
 function ClassicTabLayout() {
+  const { t } = useLanguage();
   const isDark = true;
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
@@ -64,7 +67,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
+          title: t("tab.dashboard"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart" size={size} color={color} />
           ),
@@ -73,7 +76,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="orders"
         options={{
-          title: "Orders",
+          title: t("tab.orders"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list" size={size} color={color} />
           ),
@@ -82,7 +85,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="settled"
         options={{
-          title: "Settled",
+          title: t("tab.settled"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-circle" size={size} color={color} />
           ),
@@ -91,7 +94,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="canceled"
         options={{
-          title: "Canceled",
+          title: t("tab.canceled"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="close-circle" size={size} color={color} />
           ),
@@ -100,7 +103,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: t("tab.settings"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" size={size} color={color} />
           ),

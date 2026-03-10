@@ -9,19 +9,24 @@ interface StatCardProps {
   subValue?: string;
   color?: string;
   onPress?: () => void;
+  isRTL?: boolean;
 }
 
-export function StatCard({ label, value, subLabel, subValue, color = Colors.primary, onPress }: StatCardProps) {
+export function StatCard({ label, value, subLabel, subValue, color = Colors.primary, onPress, isRTL }: StatCardProps) {
+  const textAlign = isRTL ? ("right" as const) : ("left" as const);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
       onPress={onPress}
     >
-      <View style={[styles.dot, { backgroundColor: color }]} />
-      <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label}>{label}</Text>
+      <View style={isRTL ? { alignItems: "flex-end" } : undefined}>
+        <View style={[styles.dot, { backgroundColor: color }]} />
+      </View>
+      <Text style={[styles.value, { textAlign }]}>{value}</Text>
+      <Text style={[styles.label, { textAlign }]}>{label}</Text>
       {subLabel && subValue && (
-        <View style={styles.subRow}>
+        <View style={[styles.subRow, isRTL && { flexDirection: "row-reverse" }]}>
           <Text style={styles.subLabel}>{subLabel}</Text>
           <Text style={[styles.subValue, { color }]}>{subValue}</Text>
         </View>

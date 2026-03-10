@@ -13,22 +13,23 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { fetchOrders, type AliOrder, getMonthDateRange, formatDateForApi, getLast5MonthsRange } from "@/hooks/useOrders";
 
 interface DashboardData {
   paid: { count: number; commission: number };
   receivedThisMonth: { count: number; commission: number };
   receivedLastMonth: { count: number; commission: number };
-  settled: { count: number };
-  canceled: { count: number };
+  settled: { count: number; commission: number };
+  canceled: { count: number; commission: number };
 }
 
 const emptyData: DashboardData = {
   paid: { count: 0, commission: 0 },
   receivedThisMonth: { count: 0, commission: 0 },
   receivedLastMonth: { count: 0, commission: 0 },
-  settled: { count: 0 },
-  canceled: { count: 0 },
+  settled: { count: 0, commission: 0 },
+  canceled: { count: 0, commission: 0 },
 };
 
 function sumCommission(orders: AliOrder[]): number {
@@ -41,6 +42,7 @@ function sumCommission(orders: AliOrder[]): number {
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { settings, isConfigured } = useSettings();
+  const { t, isRTL } = useLanguage();
   const [data, setData] = useState<DashboardData>(emptyData);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -84,12 +86,12 @@ export default function DashboardScreen() {
         paid: { count: paid.total_record_count, commission: sumCommission(paid.orders) },
         receivedThisMonth: { count: thisM.total_record_count, commission: sumCommission(thisM.orders) },
         receivedLastMonth: { count: lastM.total_record_count, commission: sumCommission(lastM.orders) },
-        settled: { count: settled.total_record_count },
-        canceled: { count: canceled.total_record_count },
+        settled: { count: settled.total_record_count, commission: sumCommission(settled.orders) },
+        canceled: { count: canceled.total_record_count, commission: sumCommission(canceled.orders) },
       });
       setLastUpdated(new Date());
     } catch (err: any) {
-      setError("Failed to load dashboard. Check your credentials.");
+      setError(t("dashboard.error"));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -101,18 +103,20 @@ export default function DashboardScreen() {
   }, [loadDashboard]);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const rtlStyle = isRTL ? { direction: "rtl" as const } : undefined;
+  const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
   if (!isConfigured) {
     return (
       <View style={[styles.unconfigured, { paddingTop: topPad + 20 }]}>
         <Feather name="settings" size={52} color={Colors.textMuted} />
-        <Text style={styles.unconfiguredTitle}>Setup Required</Text>
-        <Text style={styles.unconfiguredText}>
-          Go to Settings and enter your AliExpress Affiliate App Key and Secret to get started.
-        </Text>
+        <Text style={styles.unconfiguredTitle}>{t("dashboard.setupRequired")}</Text>
+        <Text style={styles.unconfiguredText}>{t("dashboard.setupText")}</Text>
       </View>
     );
   }
+
+  const locale = isRTL ? "ar-SA" : "en-US";
 
   return (
     <ScrollView
@@ -128,91 +132,100 @@ export default function DashboardScreen() {
       }
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, isRTL && { flexDirection: "row-reverse" }]}>
         <View>
-          <Text style={styles.greeting}>Overview</Text>
-          <Text style={styles.title}>AliAffiliate</Text>
+          <Text style={[styles.greeting, { textAlign }]}>{t("dashboard.overview")}</Text>
+          <Text style={[styles.title, { textAlign }]}>{t("dashboard.appName")}</Text>
         </View>
         <View style={[styles.badge, { backgroundColor: Colors.success + "22" }]}>
           <View style={[styles.badgeDot, { backgroundColor: Colors.success }]} />
-          <Text style={[styles.badgeText, { color: Colors.success }]}>Live</Text>
+          <Text style={[styles.badgeText, { color: Colors.success }]}>{t("dashboard.live")}</Text>
         </View>
       </View>
 
       {lastUpdated && (
-        <Text style={styles.lastUpdated}>
-          Updated {lastUpdated.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+        <Text style={[styles.lastUpdated, { textAlign }]}>
+          {t("dashboard.updated")} {lastUpdated.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
         </Text>
       )}
 
       {isLoading && (
-        <View style={styles.loadingRow}>
+        <View style={[styles.loadingRow, isRTL && { flexDirection: "row-reverse" }]}>
           <ActivityIndicator color={Colors.primary} size="small" />
-          <Text style={styles.loadingText}>Fetching data…</Text>
+          <Text style={styles.loadingText}>{t("dashboard.fetching")}</Text>
         </View>
       )}
 
       {error && (
-        <View style={styles.errorBanner}>
+        <View style={[styles.errorBanner, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather name="alert-triangle" size={16} color={Colors.danger} />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[styles.errorText, { textAlign }]}>{error}</Text>
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>Order Status</Text>
+      <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.orderStatus")}</Text>
       <View style={styles.statsGrid}>
         <StatCard
-          label="Paid – Pending Delivery"
+          label={t("stat.paidPending")}
           value={data.paid.count}
           color={Colors.info}
-          subLabel="Est. Commission"
+          subLabel={t("stat.estCommission")}
           subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
+          isRTL={isRTL}
         />
         <StatCard
-          label="Received This Month"
+          label={t("stat.receivedThisMonth")}
           value={data.receivedThisMonth.count}
           color={Colors.success}
-          subLabel="Est. Commission"
+          subLabel={t("stat.estCommission")}
           subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
+          isRTL={isRTL}
         />
         <StatCard
-          label="Received Last Month"
+          label={t("stat.receivedLastMonth")}
           value={data.receivedLastMonth.count}
           color={Colors.primary}
-          subLabel="Est. Commission"
+          subLabel={t("stat.estCommission")}
           subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
+          isRTL={isRTL}
         />
         <StatCard
-          label="Settled Orders"
+          label={t("stat.settledOrders")}
           value={data.settled.count}
           color={Colors.accent}
+          subLabel={t("stat.commission")}
+          subValue={data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
+          isRTL={isRTL}
         />
         <StatCard
-          label="Canceled Orders"
+          label={t("stat.canceledOrders")}
           value={data.canceled.count}
           color={Colors.danger}
+          subLabel={t("stat.commission")}
+          subValue={data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"}
+          isRTL={isRTL}
         />
       </View>
 
-      <Text style={styles.sectionTitle}>Commission Summary</Text>
+      <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.commissionSummary")}</Text>
       <View style={styles.commissionCard}>
-        <View style={styles.commissionRow}>
+        <View style={[styles.commissionRow, isRTL && { flexDirection: "row-reverse" }]}>
           <View style={styles.commissionItem}>
-            <Text style={styles.commissionLabel}>Paid Orders</Text>
+            <Text style={styles.commissionLabel}>{t("commission.paidOrders")}</Text>
             <Text style={[styles.commissionValue, { color: Colors.info }]}>
               {data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
             </Text>
           </View>
           <View style={styles.commissionDivider} />
           <View style={styles.commissionItem}>
-            <Text style={styles.commissionLabel}>This Month</Text>
+            <Text style={styles.commissionLabel}>{t("commission.thisMonth")}</Text>
             <Text style={[styles.commissionValue, { color: Colors.success }]}>
               {data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
             </Text>
           </View>
           <View style={styles.commissionDivider} />
           <View style={styles.commissionItem}>
-            <Text style={styles.commissionLabel}>Last Month</Text>
+            <Text style={styles.commissionLabel}>{t("commission.lastMonth")}</Text>
             <Text style={[styles.commissionValue, { color: Colors.primary }]}>
               {data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
             </Text>

@@ -14,11 +14,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { useSettings } from "@/context/SettingsContext";
+import { useLanguage, type Language } from "@/context/LanguageContext";
 import { fetchOrders } from "@/hooks/useOrders";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { settings, updateSettings } = useSettings();
+  const { t, language, setLanguage, isRTL } = useLanguage();
 
   const [appKey, setAppKey] = useState(settings.app_key);
   const [appSecret, setAppSecret] = useState(settings.app_secret);
@@ -30,10 +32,11 @@ export default function SettingsScreen() {
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
   const handleSave = async () => {
     if (!appKey.trim() || !appSecret.trim()) {
-      Alert.alert("Error", "App Key and App Secret are required.");
+      Alert.alert(t("common.error"), t("settings.credentialsRequired"));
       return;
     }
     setIsSaving(true);
@@ -45,7 +48,7 @@ export default function SettingsScreen() {
 
   const handleTest = async () => {
     if (!appKey.trim() || !appSecret.trim()) {
-      Alert.alert("Error", "Save your credentials first.");
+      Alert.alert(t("common.error"), t("settings.saveFirst"));
       return;
     }
     setIsTesting(true);
@@ -58,12 +61,16 @@ export default function SettingsScreen() {
         page_no: 1,
         page_size: 1,
       });
-      setTestResult({ ok: true, message: "Connection successful! API is working." });
+      setTestResult({ ok: true, message: t("settings.testSuccess") });
     } catch (err: any) {
-      setTestResult({ ok: false, message: err?.message || "Connection failed. Check your credentials." });
+      setTestResult({ ok: false, message: err?.message || t("settings.testFail") });
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleLanguageChange = (lang: Language) => {
+    setLanguage(lang);
   };
 
   return (
@@ -76,22 +83,47 @@ export default function SettingsScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Enter your AliExpress Affiliate credentials. Each user has their own keys.</Text>
+      <Text style={[styles.title, { textAlign }]}>{t("settings.title")}</Text>
+      <Text style={[styles.subtitle, { textAlign }]}>{t("settings.subtitle")}</Text>
 
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
+          <Feather name="globe" size={16} color={Colors.primary} />
+          <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
+        </View>
+        <View style={styles.langRow}>
+          <Pressable
+            style={[styles.langBtn, language === "en" && styles.langBtnActive]}
+            onPress={() => handleLanguageChange("en")}
+          >
+            <Text style={[styles.langBtnText, language === "en" && styles.langBtnTextActive]}>
+              {t("settings.english")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.langBtn, language === "ar" && styles.langBtnActive]}
+            onPress={() => handleLanguageChange("ar")}
+          >
+            <Text style={[styles.langBtnText, language === "ar" && styles.langBtnTextActive]}>
+              {t("settings.arabic")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather name="key" size={16} color={Colors.primary} />
-          <Text style={styles.sectionTitle}>API Credentials</Text>
+          <Text style={styles.sectionTitle}>{t("settings.apiCredentials")}</Text>
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>App Key</Text>
+          <Text style={[styles.label, { textAlign }]}>{t("settings.appKey")}</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { textAlign }]}
             value={appKey}
             onChangeText={setAppKey}
-            placeholder="Enter your App Key"
+            placeholder={t("settings.enterAppKey")}
             placeholderTextColor={Colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -100,13 +132,13 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>App Secret</Text>
-          <View style={styles.inputRow}>
+          <Text style={[styles.label, { textAlign }]}>{t("settings.appSecret")}</Text>
+          <View style={[styles.inputRow, isRTL && { flexDirection: "row-reverse" }]}>
             <TextInput
-              style={[styles.input, { flex: 1 }]}
+              style={[styles.input, { flex: 1, textAlign }]}
               value={appSecret}
               onChangeText={setAppSecret}
-              placeholder="Enter your App Secret"
+              placeholder={t("settings.enterAppSecret")}
               placeholderTextColor={Colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -121,7 +153,6 @@ export default function SettingsScreen() {
             </Pressable>
           </View>
         </View>
-
       </View>
 
       <View style={styles.buttonGroup}>
@@ -139,7 +170,7 @@ export default function SettingsScreen() {
           ) : (
             <>
               <Feather name={saved ? "check" : "save"} size={16} color="#fff" />
-              <Text style={styles.saveBtnText}>{saved ? "Saved!" : "Save Settings"}</Text>
+              <Text style={styles.saveBtnText}>{saved ? t("settings.saved") : t("settings.saveSettings")}</Text>
             </>
           )}
         </Pressable>
@@ -154,49 +185,47 @@ export default function SettingsScreen() {
           ) : (
             <>
               <Feather name="wifi" size={16} color={Colors.primary} />
-              <Text style={styles.testBtnText}>Test Connection</Text>
+              <Text style={styles.testBtnText}>{t("settings.testConnection")}</Text>
             </>
           )}
         </Pressable>
       </View>
 
       {testResult && (
-        <View style={[styles.resultBanner, { backgroundColor: testResult.ok ? Colors.success + "22" : Colors.danger + "22" }]}>
+        <View style={[styles.resultBanner, { backgroundColor: testResult.ok ? Colors.success + "22" : Colors.danger + "22" }, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather
             name={testResult.ok ? "check-circle" : "alert-circle"}
             size={16}
             color={testResult.ok ? Colors.success : Colors.danger}
           />
-          <Text style={[styles.resultText, { color: testResult.ok ? Colors.success : Colors.danger }]}>
+          <Text style={[styles.resultText, { color: testResult.ok ? Colors.success : Colors.danger, textAlign }]}>
             {testResult.message}
           </Text>
         </View>
       )}
 
       <View style={styles.infoCard}>
-        <View style={styles.infoRow}>
+        <View style={[styles.infoRow, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather name="shield" size={16} color={Colors.textMuted} />
-          <Text style={styles.infoText}>
-            Your credentials are stored locally on your device. They are sent securely to generate AliExpress API signatures.
-          </Text>
+          <Text style={[styles.infoText, { textAlign }]}>{t("settings.securityNote")}</Text>
         </View>
       </View>
 
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather name="info" size={16} color={Colors.info} />
-          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.sectionTitle}>{t("settings.about")}</Text>
         </View>
-        <View style={styles.aboutRow}>
-          <Text style={styles.aboutLabel}>App</Text>
+        <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
+          <Text style={styles.aboutLabel}>{t("settings.app")}</Text>
           <Text style={styles.aboutValue}>AliAffiliate</Text>
         </View>
-        <View style={styles.aboutRow}>
-          <Text style={styles.aboutLabel}>Version</Text>
+        <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
+          <Text style={styles.aboutLabel}>{t("settings.version")}</Text>
           <Text style={styles.aboutValue}>1.0.0</Text>
         </View>
-        <View style={styles.aboutRow}>
-          <Text style={styles.aboutLabel}>API</Text>
+        <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
+          <Text style={styles.aboutLabel}>{t("settings.api")}</Text>
           <Text style={styles.aboutValue}>AliExpress Affiliate v2.0</Text>
         </View>
       </View>
@@ -249,6 +278,33 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 0.5,
     textTransform: "uppercase",
+  },
+  langRow: {
+    flexDirection: "row",
+    padding: 12,
+    gap: 10,
+  },
+  langBtn: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+  },
+  langBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  langBtnText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontFamily: "Inter_500Medium",
+  },
+  langBtnTextActive: {
+    color: "#fff",
+    fontFamily: "Inter_600SemiBold",
   },
   field: {
     paddingHorizontal: 16,

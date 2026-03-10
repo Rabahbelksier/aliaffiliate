@@ -14,6 +14,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { SettingsProvider } from "@/context/SettingsContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import { Colors } from "@/constants/colors";
 import { StatusBar } from "expo-status-bar";
 
@@ -49,13 +50,15 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <SettingsProvider>
-          <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
-            <KeyboardProvider>
-              <RootLayoutNav />
-            </KeyboardProvider>
-          </GestureHandlerRootView>
-        </SettingsProvider>
+        <LanguageProvider>
+          <SettingsProvider>
+            <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
+              <KeyboardProvider>
+                <RootLayoutNav />
+              </KeyboardProvider>
+            </GestureHandlerRootView>
+          </SettingsProvider>
+        </LanguageProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
