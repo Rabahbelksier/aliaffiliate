@@ -16,7 +16,7 @@ const en: Translations = {
   "tab.settings": "Settings",
 
   "dashboard.overview": "Overview",
-  "dashboard.appName": "AliAffiliate",
+  "dashboard.appName": "Ali Affiliate",
   "dashboard.live": "Live",
   "dashboard.updated": "Updated",
   "dashboard.fetching": "Fetching data…",
@@ -29,14 +29,14 @@ const en: Translations = {
   "stat.paidPending": "Paid – Pending Delivery",
   "stat.receivedThisMonth": "Received This Month",
   "stat.receivedLastMonth": "Received Last Month",
-  "stat.settledOrders": "Settled Orders",
-  "stat.canceledOrders": "Canceled Orders",
+  "stat.settledOrders": "Settled Orders (5 Months)",
+  "stat.canceledOrders": "Canceled Orders (5 Months)",
   "stat.estCommission": "Est. Commission",
-  "stat.commission": "Commission",
+  "stat.commission": "Lost Commission",
 
-  "commission.paidOrders": "Paid Orders",
-  "commission.thisMonth": "This Month",
-  "commission.lastMonth": "Last Month",
+  "commission.paidOrders": "Paid",
+  "commission.thisMonth": "Received This Month",
+  "commission.lastMonth": "Received Last Month",
 
   "settled.title": "Settled",
   "settled.badge": "Completed",
@@ -49,7 +49,7 @@ const en: Translations = {
   "canceled.setupText": "Enter your API credentials in Settings to view canceled orders.",
 
   "orders.title": "Orders",
-  "orders.badge": "Paid",
+  "orders.badge": "Pending Delivery",
   "orders.empty": "No paid orders in the last 5 months.",
   "orders.setupText": "Enter your API credentials in Settings to view orders.",
 
@@ -110,7 +110,7 @@ const ar: Translations = {
   "tab.settings": "الإعدادات",
 
   "dashboard.overview": "نظرة عامة",
-  "dashboard.appName": "AliAffiliate",
+  "dashboard.appName": "Ali Affiliate",
   "dashboard.live": "مباشر",
   "dashboard.updated": "آخر تحديث",
   "dashboard.fetching": "جارٍ جلب البيانات…",
@@ -123,14 +123,14 @@ const ar: Translations = {
   "stat.paidPending": "مدفوعة – بانتظار التسليم",
   "stat.receivedThisMonth": "مستلمة هذا الشهر",
   "stat.receivedLastMonth": "مستلمة الشهر الماضي",
-  "stat.settledOrders": "الطلبات المسوّاة",
-  "stat.canceledOrders": "الطلبات الملغاة",
+  "stat.settledOrders": "طلبات تمت تسويتها (5 أشهر)",
+  "stat.canceledOrders": "الطلبات الملغاة (5 أشهر)",
   "stat.estCommission": "العمولة المقدّرة",
-  "stat.commission": "العمولة",
+  "stat.commission": "العمولة الضائعة",
 
   "commission.paidOrders": "المدفوعة",
-  "commission.thisMonth": "هذا الشهر",
-  "commission.lastMonth": "الشهر الماضي",
+  "commission.thisMonth": "المستلمة هذا الشهر",
+  "commission.lastMonth": "المستلمة الشهر الماضي",
 
   "settled.title": "المسوّاة",
   "settled.badge": "مكتملة",
@@ -143,7 +143,7 @@ const ar: Translations = {
   "canceled.setupText": "أدخل بيانات API في الإعدادات لعرض الطلبات الملغاة.",
 
   "orders.title": "الطلبات",
-  "orders.badge": "مدفوعة",
+  "orders.badge": "بانتظار التسليم",
   "orders.empty": "لا توجد طلبات مدفوعة في آخر 5 أشهر.",
   "orders.setupText": "أدخل بيانات API في الإعدادات لعرض الطلبات.",
 

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "AliAffiliate",
-    "slug": "my-app",
+    "name": "Ali Affiliate",
+    "slug": "Ali-Affiliate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "AliAffiliate",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.myapp"
+      "bundleIdentifier": "com.AliAffiliate.app"
     },
     "android": {
-      "package": "com.myapp",
+      "package": "com.AliAffiliate.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0A12",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
