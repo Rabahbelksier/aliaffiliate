@@ -22,7 +22,6 @@ export default function SettingsScreen() {
 
   const [appKey, setAppKey] = useState(settings.app_key);
   const [appSecret, setAppSecret] = useState(settings.app_secret);
-  const [trackingId, setTrackingId] = useState(settings.tracking_id);
   const [showSecret, setShowSecret] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -38,7 +37,7 @@ export default function SettingsScreen() {
       return;
     }
     setIsSaving(true);
-    await updateSettings({ app_key: appKey.trim(), app_secret: appSecret.trim(), tracking_id: trackingId.trim() });
+    await updateSettings({ app_key: appKey.trim(), app_secret: appSecret.trim() });
     setIsSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -78,7 +77,7 @@ export default function SettingsScreen() {
       showsVerticalScrollIndicator={false}
     >
       <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Your credentials are stored locally and never sent to our servers.</Text>
+      <Text style={styles.subtitle}>Enter your AliExpress Affiliate credentials. Each user has their own keys.</Text>
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -123,19 +122,6 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Tracking ID (optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={trackingId}
-            onChangeText={setTrackingId}
-            placeholder="Your tracking ID"
-            placeholderTextColor={Colors.textMuted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="done"
-          />
-        </View>
       </View>
 
       <View style={styles.buttonGroup}>
@@ -191,7 +177,7 @@ export default function SettingsScreen() {
         <View style={styles.infoRow}>
           <Feather name="shield" size={16} color={Colors.textMuted} />
           <Text style={styles.infoText}>
-            All data is encrypted and stored on your device only. No credentials are transmitted to external servers beyond AliExpress API.
+            Your credentials are stored locally on your device. They are sent securely to generate AliExpress API signatures.
           </Text>
         </View>
       </View>

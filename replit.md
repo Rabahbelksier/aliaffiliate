@@ -9,9 +9,10 @@ Mobile app to track AliExpress Affiliate orders, view commissions, and analyze p
 ## Architecture
 
 - **Frontend**: Expo React Native with Expo Router (file-based routing)
-- **Backend**: Express.js on port 5000 — proxies AliExpress Affiliate API with MD5 signature generation
+- **Backend**: Express.js deployed on Render at `https://aliaffiliate.onrender.com` — proxies AliExpress Affiliate API with MD5 signature generation
 - **State**: AsyncStorage for offline caching + React Query for data fetching
 - **Navigation**: Bottom tabs (Dashboard, Orders, Settled, Canceled, Settings)
+- **API Keys**: Each user provides their own `app_key` and `app_secret` via the Settings screen, stored locally on device via AsyncStorage
 
 ## API Integration — Key Findings
 
@@ -38,8 +39,9 @@ After live testing the AliExpress API, the correct details are:
 - **Dashboard**: Live order counts and commission totals across all statuses
 - **Orders**: Tabbed list (Paid, Received This Month, Received Last Month) with pagination
 - **Settled/Canceled**: Dedicated screens for completed/void orders
-- **Settings**: Secure local storage of App Key, App Secret, Tracking ID + API test
+- **Settings**: Per-user App Key and App Secret stored locally + API test
 - **Offline Support**: AsyncStorage caches last API response per query
+- **Tracking ID**: Automatically fetched from API responses (not manually saved)
 
 ## Backend Endpoint `/api/orders` (POST)
 
@@ -77,10 +79,18 @@ server/
   index.ts              # Express server setup
 constants/
   colors.ts             # Dark theme color system
+lib/
+  query-client.ts       # API URL config pointing to Render server
 ```
+
+## Server Deployment
+
+- Backend is deployed on Render at `https://aliaffiliate.onrender.com`
+- Frontend connects to the Render server directly (hardcoded in `lib/query-client.ts`)
+- Build command: `npm install && npm run server:build`
+- Start command: `npm run server:prod`
 
 ## Running the Project
 
-- Backend: `npm run server:dev` (port 5000)
 - Frontend: `npm run expo:dev` (port 8081)
 - Scan QR code with Expo Go to test on Android/iOS device
