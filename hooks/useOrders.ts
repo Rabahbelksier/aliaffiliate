@@ -61,6 +61,15 @@ export function getMonthDateRange(monthOffset = 0): { start: string; end: string
   };
 }
 
+export function getLast5MonthsRange(): { start: string; end: string } {
+  const now = new Date();
+  const fiveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, now.getDate(), 0, 0, 0);
+  return {
+    start: formatDateForApi(fiveMonthsAgo),
+    end: formatDateForApi(now),
+  };
+}
+
 const CACHE_PREFIX = "@aliaffiliate_orders_v2_";
 
 export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResponse> {

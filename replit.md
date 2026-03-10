@@ -21,7 +21,7 @@ After live testing the AliExpress API, the correct details are:
 - **Correct method**: `aliexpress.affiliate.order.list` (NOT `aliexpress.affiliate.order.get`)
 - **Response key**: `aliexpress_affiliate_order_list_response`
 - **Date format**: `YYYY-MM-DD HH:MM:SS` (NOT timestamps)
-- **Time limit**: Max 180-day range per request (we use 30 days by default)
+- **Time limit**: Max 180-day range per request (we use 5 months / ~150 days by default)
 - **Valid status values**: "Payment Completed", "Buyer Confirmed Receipt", "Invalid" (canceled)
 - **Endpoint**: `https://api-sg.aliexpress.com/sync`
 
@@ -86,20 +86,20 @@ lib/
 ## API URL Resolution
 
 - `lib/query-client.ts` resolves the API URL dynamically:
-  - If `EXPO_PUBLIC_DOMAIN` env var is set (during Replit dev), uses that domain
-  - Otherwise falls back to `https://aliaffiliate.onrender.com` (production)
-- This allows the app to work both in development (Replit backend) and production (Render)
+  - If `EXPO_PUBLIC_DOMAIN` env var is set, uses `https://${EXPO_PUBLIC_DOMAIN}`
+  - Otherwise falls back to `https://aliaffiliate.onrender.com`
+- The Start Frontend workflow sets `EXPO_PUBLIC_DOMAIN=aliaffiliate.onrender.com` so both web preview and Expo Go use Render
+- CORS on the server allows any origin (the API is secured by per-request app_key/app_secret)
 
 ## Server Deployment (Render)
 
 - Backend is deployed on Render at `https://aliaffiliate.onrender.com`
 - Build command: `npm install && npm run server:build`
 - Start command: `npm run server:prod`
-- CORS allows: Render domain, Replit domains, localhost (dev)
+- After code changes, redeploy to Render for changes to take effect on production
 
 ## Running the Project
 
-- Backend: `npm run server:dev` (port 5000) — needed for local development
-- Frontend: `npm run expo:dev` (port 8081)
+- Backend: `npm run server:dev` (port 5000) — local dev server
+- Frontend: Start Frontend workflow (port 8081) — points to Render server
 - Scan QR code with Expo Go to test on Android/iOS device
-- In production builds (no EXPO_PUBLIC_DOMAIN), the app connects to Render automatically

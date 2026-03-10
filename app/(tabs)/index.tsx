@@ -13,7 +13,7 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
-import { fetchOrders, type AliOrder, getMonthDateRange, formatDateForApi } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, getMonthDateRange, formatDateForApi, getLast5MonthsRange } from "@/hooks/useOrders";
 
 interface DashboardData {
   paid: { count: number; commission: number };
@@ -55,8 +55,8 @@ export default function DashboardScreen() {
 
     const thisMonth = getMonthDateRange(0);
     const lastMonth = getMonthDateRange(-1);
+    const last5Months = getLast5MonthsRange();
     const now = new Date();
-    const last30 = formatDateForApi(new Date(now.getTime() - 30 * 24 * 3600 * 1000));
     const nowStr = formatDateForApi(now);
 
     const base = {
@@ -67,11 +67,11 @@ export default function DashboardScreen() {
 
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
-        fetchOrders({ ...base, status: "Payment Completed", start_time: last30, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Payment Completed", start_time: last5Months.start, end_time: nowStr }),
         fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: thisMonth.start, end_time: thisMonth.end, time_type: "1" }),
         fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "1" }),
-        fetchOrders({ ...base, status: "Settled", start_time: last30, end_time: nowStr }),
-        fetchOrders({ ...base, status: "Invalid", start_time: last30, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Settled", start_time: last5Months.start, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Invalid", start_time: last5Months.start, end_time: nowStr }),
       ]);
 
       const paid = paidRes.status === "fulfilled" ? paidRes.value : { orders: [], total_record_count: 0 };

@@ -11,7 +11,7 @@ import { Colors } from "@/constants/colors";
 import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { Feather } from "@expo/vector-icons";
-import { getMonthDateRange, formatDateForApi } from "@/hooks/useOrders";
+import { getMonthDateRange, getLast5MonthsRange } from "@/hooks/useOrders";
 
 const TABS = [
   { key: "paid", label: "Paid" },
@@ -26,9 +26,7 @@ export default function OrdersScreen() {
 
   const thisMonth = getMonthDateRange(0);
   const lastMonth = getMonthDateRange(-1);
-  const now = new Date();
-  const last30 = formatDateForApi(new Date(now.getTime() - 30 * 24 * 3600 * 1000));
-  const nowStr = formatDateForApi(now);
+  const last5Months = getLast5MonthsRange();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
@@ -68,10 +66,10 @@ export default function OrdersScreen() {
         {activeTab === 0 && (
           <OrdersList
             status="Payment Completed"
-            startTime={last30}
-            endTime={nowStr}
+            startTime={last5Months.start}
+            endTime={last5Months.end}
             timeType="1"
-            emptyLabel="No paid orders waiting for delivery in the last 30 days."
+            emptyLabel="No paid orders waiting for delivery in the last 5 months."
           />
         )}
         {activeTab === 1 && (

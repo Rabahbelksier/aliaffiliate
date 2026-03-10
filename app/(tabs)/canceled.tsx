@@ -5,16 +5,14 @@ import { Colors } from "@/constants/colors";
 import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { Feather } from "@expo/vector-icons";
-import { formatDateForApi } from "@/hooks/useOrders";
+import { getLast5MonthsRange } from "@/hooks/useOrders";
 
 export default function CanceledScreen() {
   const insets = useSafeAreaInsets();
   const { isConfigured } = useSettings();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const now = new Date();
-  const last30 = formatDateForApi(new Date(now.getTime() - 30 * 24 * 3600 * 1000));
-  const nowStr = formatDateForApi(now);
+  const last5Months = getLast5MonthsRange();
 
   if (!isConfigured) {
     return (
@@ -38,10 +36,10 @@ export default function CanceledScreen() {
       </View>
       <OrdersList
         status="Invalid"
-        startTime={last30}
-        endTime={nowStr}
+        startTime={last5Months.start}
+        endTime={last5Months.end}
         timeType="1"
-        emptyLabel="No canceled orders in the last 30 days."
+        emptyLabel="No canceled orders in the last 5 months."
       />
     </View>
   );
