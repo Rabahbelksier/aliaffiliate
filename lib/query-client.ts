@@ -1,10 +1,14 @@
 import { fetch } from "expo/fetch";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_BASE_URL = "https://aliaffiliate.onrender.com";
+const RENDER_URL = "https://aliaffiliate.onrender.com";
 
 export function getApiUrl(): string {
-  return API_BASE_URL;
+  const domain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (domain) {
+    return `https://${domain}`;
+  }
+  return RENDER_URL;
 }
 
 async function throwIfResNotOk(res: Response) {

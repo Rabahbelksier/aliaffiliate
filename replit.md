@@ -80,17 +80,26 @@ server/
 constants/
   colors.ts             # Dark theme color system
 lib/
-  query-client.ts       # API URL config pointing to Render server
+  query-client.ts       # API URL config (EXPO_PUBLIC_DOMAIN or Render fallback)
 ```
 
-## Server Deployment
+## API URL Resolution
+
+- `lib/query-client.ts` resolves the API URL dynamically:
+  - If `EXPO_PUBLIC_DOMAIN` env var is set (during Replit dev), uses that domain
+  - Otherwise falls back to `https://aliaffiliate.onrender.com` (production)
+- This allows the app to work both in development (Replit backend) and production (Render)
+
+## Server Deployment (Render)
 
 - Backend is deployed on Render at `https://aliaffiliate.onrender.com`
-- Frontend connects to the Render server directly (hardcoded in `lib/query-client.ts`)
 - Build command: `npm install && npm run server:build`
 - Start command: `npm run server:prod`
+- CORS allows: Render domain, Replit domains, localhost (dev)
 
 ## Running the Project
 
+- Backend: `npm run server:dev` (port 5000) — needed for local development
 - Frontend: `npm run expo:dev` (port 8081)
 - Scan QR code with Expo Go to test on Android/iOS device
+- In production builds (no EXPO_PUBLIC_DOMAIN), the app connects to Render automatically
