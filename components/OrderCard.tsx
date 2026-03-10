@@ -31,9 +31,19 @@ function statusLabel(status?: string): string {
 
 function formatDate(ts?: string): string {
   if (!ts) return "—";
-  const d = new Date(Number(ts));
-  if (isNaN(d.getTime())) return ts;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  // Handle AliExpress date strings like "2026-03-07 01:44:32"
+  // Replace the space with 'T' for proper ISO parsing, or just parse directly
+  const normalized = ts.includes("T") ? ts : ts.replace(" ", "T");
+  const d = new Date(normalized);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  // Fallback: try as numeric timestamp
+  const ms = Number(ts);
+  if (!isNaN(ms) && ms > 1e10) {
+    return new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  return ts;
 }
 
 function calcCommission(amount?: string, rate?: string): string {
@@ -119,7 +129,11 @@ export function OrderCard({ order }: OrderCardProps) {
         <View style={styles.finItem}>
           <Text style={styles.finLabel}>Rate</Text>
           <Text style={styles.finValue}>
-            {order.commission_rate ? `${order.commission_rate}%` : "—"}
+            {order.commission_rate
+              ? order.commission_rate.includes("%")
+                ? order.commission_rate
+                : `${order.commission_rate}%`
+              : "—"}
           </Text>
         </View>
 
