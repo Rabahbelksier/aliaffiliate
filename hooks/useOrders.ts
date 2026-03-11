@@ -91,14 +91,11 @@ export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResp
 
     const data: OrdersResponse = await res.json();
 
-    // If API returned an error (but HTTP 200), throw with the error message
     if (data.error && data.orders.length === 0) {
-      // Still cache the empty result but note the error
-      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
-      // Don't throw if it's just empty results — only throw on real errors
-    } else {
-      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+      throw new Error(data.error);
     }
+
+    await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
 
     return data;
   } catch (err) {

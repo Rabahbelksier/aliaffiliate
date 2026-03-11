@@ -15,7 +15,8 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage, type Language } from "@/context/LanguageContext";
-import { fetchOrders } from "@/hooks/useOrders";
+import { getApiUrl } from "@/lib/query-client";
+import { fetch as nativeFetch } from "expo/fetch";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -54,13 +55,24 @@ export default function SettingsScreen() {
     setIsTesting(true);
     setTestResult(null);
     try {
-      await fetchOrders({
-        app_key: appKey.trim(),
-        app_secret: appSecret.trim(),
-        status: "Payment Completed",
-        page_no: 1,
-        page_size: 1,
+      const baseUrl = getApiUrl();
+      const url = new URL("/api/orders", baseUrl).toString();
+      const res = await nativeFetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          app_key: appKey.trim(),
+          app_secret: appSecret.trim(),
+          status: "Payment Completed",
+          page_no: 1,
+          page_size: 1,
+        }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.error && data.orders?.length === 0) {
+        throw new Error(data.error);
+      }
       setTestResult({ ok: true, message: t("settings.testSuccess") });
     } catch (err: any) {
       setTestResult({ ok: false, message: err?.message || t("settings.testFail") });
