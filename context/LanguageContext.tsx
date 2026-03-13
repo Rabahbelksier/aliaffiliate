@@ -250,4 +250,3 @@ export function useLanguage() {
   if (!ctx) throw new Error("useLanguage must be inside LanguageProvider");
   return ctx;
 }
-العمولة الضائعة
