@@ -32,6 +32,7 @@ const en: Translations = {
   "stat.settledOrders": "Settled Orders (5 Months)",
   "stat.canceledOrders": "Canceled Orders (5 Months)",
   "stat.estCommission": "Est. Commission",
+  "stat.settledCommission": "Paid Commission",
   "stat.commission": "Lost Commission",
 
   "commission.paidOrders": "Paid",
@@ -126,6 +127,7 @@ const ar: Translations = {
   "stat.settledOrders": "طلبات تمت تسويتها (5 أشهر)",
   "stat.canceledOrders": "الطلبات الملغاة (5 أشهر)",
   "stat.estCommission": "العمولة المقدّرة",
+  "stat.settledCommission": "عمولة تم دفعها",
   "stat.commission": "العمولة الضائعة",
 
   "commission.paidOrders": "المدفوعة",
@@ -248,3 +250,4 @@ export function useLanguage() {
   if (!ctx) throw new Error("useLanguage must be inside LanguageProvider");
   return ctx;
 }
+العمولة الضائعة

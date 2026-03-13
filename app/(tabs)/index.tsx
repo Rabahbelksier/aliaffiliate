@@ -70,8 +70,8 @@ export default function DashboardScreen() {
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
         fetchOrders({ ...base, status: "Payment Completed", start_time: last5Months.start, end_time: nowStr }),
-        fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: thisMonth.start, end_time: thisMonth.end, time_type: "1" }),
-        fetchOrders({ ...base, status: "Buyer Confirmed Receipt", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "1" }),
+        fetchOrders({ ...base, status: "Completed Order", start_time: thisMonth.start, end_time: nowStr, time_type: "Buyer Confirmed Receipt" }),
+        fetchOrders({ ...base, status: "Completed Order", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "Buyer Confirmed Receipt" }),
         fetchOrders({ ...base, status: "Completed Settlement", start_time: last5Months.start, end_time: nowStr }),
         fetchOrders({ ...base, status: "Invalid", start_time: last5Months.start, end_time: nowStr }),
       ]);
@@ -193,7 +193,7 @@ export default function DashboardScreen() {
           label={t("stat.settledOrders")}
           value={data.settled.count}
           color={Colors.accent}
-          subLabel={t("stat.commission")}
+          subLabel={t("stat.settledCommission")}
           subValue={data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
           isRTL={isRTL}
         />

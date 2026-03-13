@@ -12,7 +12,7 @@ import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Feather } from "@expo/vector-icons";
-import { getMonthDateRange, getLast5MonthsRange } from "@/hooks/useOrders";
+import { getMonthDateRange, getLast5MonthsRange, formatDateForApi } from "@/hooks/useOrders";
 
 export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
@@ -23,6 +23,7 @@ export default function OrdersScreen() {
   const thisMonth = getMonthDateRange(0);
   const lastMonth = getMonthDateRange(-1);
   const last5Months = getLast5MonthsRange();
+  const nowStr = formatDateForApi(new Date());
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
@@ -75,19 +76,19 @@ export default function OrdersScreen() {
         )}
         {activeTab === 1 && (
           <OrdersList
-            status="Buyer Confirmed Receipt"
+            status="Completed Order"
             startTime={thisMonth.start}
-            endTime={thisMonth.end}
-            timeType="1"
+            endTime={nowStr}
+            timeType="Buyer Confirmed Receipt"
             emptyLabel={t("orders.empty")}
           />
         )}
         {activeTab === 2 && (
           <OrdersList
-            status="Buyer Confirmed Receipt"
+            status="Completed Order"
             startTime={lastMonth.start}
             endTime={lastMonth.end}
-            timeType="1"
+            timeType="Buyer Confirmed Receipt"
             emptyLabel={t("orders.empty")}
           />
         )}
