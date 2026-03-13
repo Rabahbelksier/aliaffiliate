@@ -40,6 +40,8 @@ export interface FetchOrdersParams {
   page_no?: number;
   page_size?: number;
   fields?: string;
+  /** "YYYY-MM" — fetches all Buyer Confirmed Receipt orders and filters by finished_time month */
+  finished_month?: string;
 }
 
 // Format date to AliExpress required format: YYYY-MM-DD HH:MM:SS
@@ -68,6 +70,13 @@ export function getLast5MonthsRange(): { start: string; end: string } {
     start: formatDateForApi(fiveMonthsAgo),
     end: formatDateForApi(now),
   };
+}
+
+// Returns "YYYY-MM" string for a month offset (0 = this month, -1 = last month)
+export function getMonthString(monthOffset = 0): string {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 const CACHE_PREFIX = "@aliaffiliate_orders_v2_";

@@ -12,7 +12,7 @@ import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Feather } from "@expo/vector-icons";
-import { getMonthDateRange, getLast5MonthsRange, formatDateForApi } from "@/hooks/useOrders";
+import { getLast5MonthsRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
 
 export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
@@ -20,10 +20,10 @@ export default function OrdersScreen() {
   const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState(0);
 
-  const thisMonth = getMonthDateRange(0);
-  const lastMonth = getMonthDateRange(-1);
   const last5Months = getLast5MonthsRange();
   const nowStr = formatDateForApi(new Date());
+  const thisMonthStr = getMonthString(0);
+  const lastMonthStr = getMonthString(-1);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
@@ -76,19 +76,13 @@ export default function OrdersScreen() {
         )}
         {activeTab === 1 && (
           <OrdersList
-            status="Completed Order"
-            startTime={thisMonth.start}
-            endTime={nowStr}
-            timeType="Buyer Confirmed Receipt"
+            finished_month={thisMonthStr}
             emptyLabel={t("orders.empty")}
           />
         )}
         {activeTab === 2 && (
           <OrdersList
-            status="Completed Order"
-            startTime={lastMonth.start}
-            endTime={lastMonth.end}
-            timeType="Buyer Confirmed Receipt"
+            finished_month={lastMonthStr}
             emptyLabel={t("orders.empty")}
           />
         )}

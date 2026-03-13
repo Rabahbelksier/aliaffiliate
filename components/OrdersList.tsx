@@ -16,19 +16,23 @@ import { useLanguage } from "@/context/LanguageContext";
 import { fetchOrders, type AliOrder, type FetchOrdersParams, formatDateForApi } from "@/hooks/useOrders";
 
 interface OrdersListProps {
-  status: string;
+  /** Standard mode: filter by status */
+  status?: string;
   startTime?: string;
   endTime?: string;
   timeType?: string;
+  /** Received mode: "YYYY-MM" — fetches all Buyer Confirmed Receipt orders filtered by finished_time month */
+  finished_month?: string;
   emptyLabel?: string;
 }
 
 const PAGE_SIZE = 10;
 
-export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }: OrdersListProps) {
+export function OrdersList({ status, startTime, endTime, timeType, finished_month, emptyLabel }: OrdersListProps) {
   const { settings } = useSettings();
   const { t, isRTL } = useLanguage();
   const [orders, setOrders] = useState<AliOrder[]>([]);
+  const [displayedOrders, setDisplayedOrders] = useState<AliOrder[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [pageNo, setPageNo] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,30 +47,51 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
-    const now = new Date();
-    const defaultStart = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
-
-    const params: FetchOrdersParams = {
-      app_key: settings.app_key,
-      app_secret: settings.app_secret,
-      status,
-      page_no: page,
-      page_size: PAGE_SIZE,
-      time_type: timeType || "1",
-      start_time: startTime || formatDateForApi(defaultStart),
-      end_time: endTime || formatDateForApi(now),
-    };
-
     try {
+      let params: FetchOrdersParams;
+
+      if (finished_month) {
+        // Received orders mode: server fetches all pages and filters by finished_time month
+        params = {
+          app_key: settings.app_key,
+          app_secret: settings.app_secret,
+          finished_month,
+        };
+      } else {
+        // Standard mode: pass-through to AliExpress API with pagination
+        const now = new Date();
+        const defaultStart = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
+        params = {
+          app_key: settings.app_key,
+          app_secret: settings.app_secret,
+          status,
+          page_no: page,
+          page_size: PAGE_SIZE,
+          time_type: timeType || "1",
+          start_time: startTime || formatDateForApi(defaultStart),
+          end_time: endTime || formatDateForApi(now),
+        };
+      }
+
       const data = await fetchOrders(params);
 
       if (data.error && data.orders.length === 0) {
         setApiError(data.error);
         setOrders([]);
+        setDisplayedOrders([]);
         setTotalCount(0);
       } else {
-        setOrders(data.orders || []);
-        setTotalCount(data.total_record_count || 0);
+        const allOrders = data.orders || [];
+        setOrders(allOrders);
+        setTotalCount(data.total_record_count || allOrders.length);
+
+        if (finished_month) {
+          // Client-side pagination over the already-filtered results
+          const start = (page - 1) * PAGE_SIZE;
+          setDisplayedOrders(allOrders.slice(start, start + PAGE_SIZE));
+        } else {
+          setDisplayedOrders(allOrders);
+        }
         setPageNo(page);
       }
       setHasFetched(true);
@@ -77,7 +102,18 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [settings, status, startTime, endTime, timeType]);
+  }, [settings, status, startTime, endTime, timeType, finished_month]);
+
+  // For finished_month mode: navigate pages without re-fetching
+  const navigatePage = useCallback((page: number) => {
+    if (finished_month && orders.length > 0) {
+      const start = (page - 1) * PAGE_SIZE;
+      setDisplayedOrders(orders.slice(start, start + PAGE_SIZE));
+      setPageNo(page);
+    } else {
+      load(page);
+    }
+  }, [finished_month, orders, load]);
 
   React.useEffect(() => {
     load(1);
@@ -135,7 +171,7 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
         <View style={[styles.paginationRow, isRTL && { flexDirection: "row-reverse" }]}>
           <Pressable
             style={[styles.pageBtn, pageNo <= 1 && styles.pageBtnDisabled]}
-            onPress={() => pageNo > 1 && load(pageNo - 1)}
+            onPress={() => pageNo > 1 && navigatePage(pageNo - 1)}
             disabled={pageNo <= 1 || isLoading}
           >
             <Feather name={isRTL ? "chevron-right" : "chevron-left"} size={18} color={pageNo <= 1 ? Colors.textMuted : Colors.text} />
@@ -148,7 +184,7 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
 
           <Pressable
             style={[styles.pageBtn, pageNo >= totalPages && styles.pageBtnDisabled]}
-            onPress={() => pageNo < totalPages && load(pageNo + 1)}
+            onPress={() => pageNo < totalPages && navigatePage(pageNo + 1)}
             disabled={pageNo >= totalPages || isLoading}
           >
             <Text style={[styles.pageBtnText, pageNo >= totalPages && { color: Colors.textMuted }]}>{t("ordersList.next")}</Text>
@@ -167,11 +203,11 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
         </View>
       )}
       <FlatList
-        data={orders}
+        data={displayedOrders}
         keyExtractor={(item, idx) => `${item.order_id}_${item.sub_order_id}_${idx}`}
         renderItem={({ item }) => <OrderCard order={item} />}
         ListEmptyComponent={renderEmpty}
-        ListFooterComponent={orders.length > 0 ? renderFooter : null}
+        ListFooterComponent={displayedOrders.length > 0 ? renderFooter : null}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl
@@ -181,7 +217,7 @@ export function OrdersList({ status, startTime, endTime, timeType, emptyLabel }:
             colors={[Colors.primary]}
           />
         }
-        scrollEnabled={!!orders.length}
+        scrollEnabled={!!displayedOrders.length}
         showsVerticalScrollIndicator={false}
       />
     </View>

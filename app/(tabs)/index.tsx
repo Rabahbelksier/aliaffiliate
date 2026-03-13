@@ -14,7 +14,7 @@ import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { fetchOrders, type AliOrder, getMonthDateRange, formatDateForApi, getLast5MonthsRange } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, getLast5MonthsRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
 
 interface DashboardData {
   paid: { count: number; commission: number };
@@ -55,11 +55,10 @@ export default function DashboardScreen() {
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
-    const thisMonth = getMonthDateRange(0);
-    const lastMonth = getMonthDateRange(-1);
     const last5Months = getLast5MonthsRange();
-    const now = new Date();
-    const nowStr = formatDateForApi(now);
+    const nowStr = formatDateForApi(new Date());
+    const thisMonthStr = getMonthString(0);
+    const lastMonthStr = getMonthString(-1);
 
     const base = {
       app_key: settings.app_key,
@@ -70,8 +69,8 @@ export default function DashboardScreen() {
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
         fetchOrders({ ...base, status: "Payment Completed", start_time: last5Months.start, end_time: nowStr }),
-        fetchOrders({ ...base, status: "Completed Order", start_time: thisMonth.start, end_time: nowStr, time_type: "Buyer Confirmed Receipt" }),
-        fetchOrders({ ...base, status: "Completed Order", start_time: lastMonth.start, end_time: lastMonth.end, time_type: "Buyer Confirmed Receipt" }),
+        fetchOrders({ ...base, finished_month: thisMonthStr }),
+        fetchOrders({ ...base, finished_month: lastMonthStr }),
         fetchOrders({ ...base, status: "Completed Settlement", start_time: last5Months.start, end_time: nowStr }),
         fetchOrders({ ...base, status: "Invalid", start_time: last5Months.start, end_time: nowStr }),
       ]);
