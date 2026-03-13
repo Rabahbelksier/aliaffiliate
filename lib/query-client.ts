@@ -1,9 +1,15 @@
 import { fetch } from "expo/fetch";
+import { Platform } from "react-native";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 const RENDER_URL = "https://aliaffiliate.onrender.com";
 
 export function getApiUrl(): string {
+  // On web: use the current page origin so API calls go to the local backend via the proxy
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  // On native (iOS/Android via Expo Go): use the configured domain
   const domain = process.env.EXPO_PUBLIC_DOMAIN;
   if (domain) {
     return `https://${domain}`;
