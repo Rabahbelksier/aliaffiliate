@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import * as fs from "fs";
 import * as path from "path";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
 const log = console.log;
@@ -143,6 +144,24 @@ function serveLandingPage({
 }
 
 function configureExpoAndLanding(app: express.Application) {
+  if (process.env.NODE_ENV !== "production") {
+    log("Development mode: proxying web requests to Expo web server at :8081");
+
+    const expoProxy = createProxyMiddleware({
+      target: "http://localhost:8081",
+      changeOrigin: true,
+      ws: true,
+    });
+
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.path.startsWith("/api")) return next();
+      return expoProxy(req, res, next);
+    });
+
+    return;
+  }
+
+  // Production: serve Expo static build and manifest
   const templatePath = path.resolve(
     process.cwd(),
     "server",
