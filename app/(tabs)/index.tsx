@@ -167,8 +167,12 @@ export default function DashboardScreen() {
         ...prev,
         settled: { count: res.total_record_count, commission: sumCommission(res.orders) },
       }));
-    } catch {}
-    finally { setIsLoadingSettled(false); }
+    } catch {
+      setData((prev) => ({
+        ...prev,
+        settled: { count: 0, commission: 0 },
+      }));
+    } finally { setIsLoadingSettled(false); }
   }, [settings, isConfigured]);
 
   const loadCanceledStat = useCallback(async (range: RangePeriod) => {
@@ -188,8 +192,12 @@ export default function DashboardScreen() {
         ...prev,
         canceled: { count: res.total_record_count, commission: sumCommission(res.orders) },
       }));
-    } catch {}
-    finally { setIsLoadingCanceled(false); }
+    } catch {
+      setData((prev) => ({
+        ...prev,
+        canceled: { count: 0, commission: 0 },
+      }));
+    } finally { setIsLoadingCanceled(false); }
   }, [settings, isConfigured]);
 
   React.useEffect(() => {
