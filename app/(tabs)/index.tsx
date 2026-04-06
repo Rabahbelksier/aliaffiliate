@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,9 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  Modal,
+  Pressable,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -14,7 +17,23 @@ import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { fetchOrders, type AliOrder, getLast5MonthsRange, getCurrentMonthRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, getCurrentMonthRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
+
+type RangePeriod = "1m" | "6m" | "1y" | "2y" | "5y";
+
+const RANGE_MONTHS: Record<RangePeriod, number> = {
+  "1m": 1,
+  "6m": 6,
+  "1y": 12,
+  "2y": 24,
+  "5y": 60,
+};
+
+function getRangeByPeriod(months: number): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - months, now.getDate(), 0, 0, 0);
+  return { start: formatDateForApi(start), end: formatDateForApi(now) };
+}
 
 interface DashboardData {
   paid: { count: number; commission: number };
@@ -42,12 +61,41 @@ function sumCommission(orders: AliOrder[]): number {
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { settings, isConfigured } = useSettings();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [data, setData] = useState<DashboardData>(emptyData);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingSettled, setIsLoadingSettled] = useState(false);
+  const [isLoadingCanceled, setIsLoadingCanceled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const [settledRange, setSettledRangeState] = useState<RangePeriod>("6m");
+  const [canceledRange, setCanceledRangeState] = useState<RangePeriod>("6m");
+  const settledRangeRef = useRef<RangePeriod>("6m");
+  const canceledRangeRef = useRef<RangePeriod>("6m");
+
+  const [showDropdown, setShowDropdown] = useState<null | "settled" | "canceled">(null);
+
+  function setSettledRange(r: RangePeriod) {
+    settledRangeRef.current = r;
+    setSettledRangeState(r);
+  }
+  function setCanceledRange(r: RangePeriod) {
+    canceledRangeRef.current = r;
+    setCanceledRangeState(r);
+  }
+
+  const RANGE_OPTIONS: Array<{ key: RangePeriod; label: string }> = [
+    { key: "1m", label: language === "ar" ? "شهر" : "Month" },
+    { key: "6m", label: language === "ar" ? "6 أشهر" : "6 Months" },
+    { key: "1y", label: language === "ar" ? "سنة" : "Year" },
+    { key: "2y", label: language === "ar" ? "سنتين" : "2 Years" },
+    { key: "5y", label: language === "ar" ? "5 سنوات" : "5 Years" },
+  ];
+
+  const getRangeLabel = (range: RangePeriod) =>
+    RANGE_OPTIONS.find((o) => o.key === range)?.label ?? range;
 
   const loadDashboard = useCallback(async (refresh = false) => {
     if (!isConfigured) return;
@@ -56,12 +104,12 @@ export default function DashboardScreen() {
     else setIsLoading(true);
 
     const currentMonth = getCurrentMonthRange();
-    const last5Months = getLast5MonthsRange();
-    const nowStr = formatDateForApi(new Date());
     const thisMonthStr = getMonthString(0);
     const lastMonthStr = getMonthString(-1);
+    const settledRangeObj = getRangeByPeriod(RANGE_MONTHS[settledRangeRef.current]);
+    const canceledRangeObj = getRangeByPeriod(RANGE_MONTHS[canceledRangeRef.current]);
 
-    const base = {
+    const b = {
       app_key: settings.app_key,
       app_secret: settings.app_secret,
       page_size: 50,
@@ -69,11 +117,11 @@ export default function DashboardScreen() {
 
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
-        fetchOrders({ ...base, status: "Payment Completed", start_time: currentMonth.start, end_time: currentMonth.end }),
-        fetchOrders({ ...base, finished_month: thisMonthStr }),
-        fetchOrders({ ...base, finished_month: lastMonthStr }),
-        fetchOrders({ ...base, status: "Completed Settlement", start_time: last5Months.start, end_time: nowStr }),
-        fetchOrders({ ...base, status: "Invalid", start_time: last5Months.start, end_time: nowStr }),
+        fetchOrders({ ...b, status: "Payment Completed", start_time: currentMonth.start, end_time: currentMonth.end }),
+        fetchOrders({ ...b, finished_month: thisMonthStr }),
+        fetchOrders({ ...b, finished_month: lastMonthStr }),
+        fetchOrders({ ...b, status: "Completed Settlement", start_time: settledRangeObj.start, end_time: settledRangeObj.end }),
+        fetchOrders({ ...b, status: "Invalid", start_time: canceledRangeObj.start, end_time: canceledRangeObj.end }),
       ]);
 
       const paid = paidRes.status === "fulfilled" ? paidRes.value : { orders: [], total_record_count: 0 };
@@ -98,12 +146,65 @@ export default function DashboardScreen() {
     }
   }, [settings, isConfigured]);
 
+  const loadSettledStat = useCallback(async (range: RangePeriod) => {
+    if (!isConfigured) return;
+    setIsLoadingSettled(true);
+    const rangeObj = getRangeByPeriod(RANGE_MONTHS[range]);
+    try {
+      const res = await fetchOrders({
+        app_key: settings.app_key,
+        app_secret: settings.app_secret,
+        page_size: 50,
+        status: "Completed Settlement",
+        start_time: rangeObj.start,
+        end_time: rangeObj.end,
+      });
+      setData((prev) => ({
+        ...prev,
+        settled: { count: res.total_record_count, commission: sumCommission(res.orders) },
+      }));
+    } catch {}
+    finally { setIsLoadingSettled(false); }
+  }, [settings, isConfigured]);
+
+  const loadCanceledStat = useCallback(async (range: RangePeriod) => {
+    if (!isConfigured) return;
+    setIsLoadingCanceled(true);
+    const rangeObj = getRangeByPeriod(RANGE_MONTHS[range]);
+    try {
+      const res = await fetchOrders({
+        app_key: settings.app_key,
+        app_secret: settings.app_secret,
+        page_size: 50,
+        status: "Invalid",
+        start_time: rangeObj.start,
+        end_time: rangeObj.end,
+      });
+      setData((prev) => ({
+        ...prev,
+        canceled: { count: res.total_record_count, commission: sumCommission(res.orders) },
+      }));
+    } catch {}
+    finally { setIsLoadingCanceled(false); }
+  }, [settings, isConfigured]);
+
   React.useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
 
+  const handleSettledRangeSelect = (range: RangePeriod) => {
+    setShowDropdown(null);
+    setSettledRange(range);
+    loadSettledStat(range);
+  };
+
+  const handleCanceledRangeSelect = (range: RangePeriod) => {
+    setShowDropdown(null);
+    setCanceledRange(range);
+    loadCanceledStat(range);
+  };
+
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const rtlStyle = isRTL ? { direction: "rtl" as const } : undefined;
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
   if (!isConfigured) {
@@ -119,120 +220,167 @@ export default function DashboardScreen() {
   const locale = isRTL ? "ar-SA" : "en-US";
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingTop: topPad + 16 }]}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={() => loadDashboard(true)}
-          tintColor={Colors.primary}
-          colors={[Colors.primary]}
-        />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={[styles.header, isRTL && { flexDirection: "row-reverse" }]}>
-        <View>
-          <Text style={[styles.greeting, { textAlign }]}>{t("dashboard.overview")}</Text>
-          <Text style={[styles.title, { textAlign }]}>{t("dashboard.appName")}</Text>
-        </View>
-        <View style={[styles.badge, { backgroundColor: Colors.success + "22" }]}>
-          <View style={[styles.badgeDot, { backgroundColor: Colors.success }]} />
-          <Text style={[styles.badgeText, { color: Colors.success }]}>{t("dashboard.live")}</Text>
-        </View>
-      </View>
-
-      {lastUpdated && (
-        <Text style={[styles.lastUpdated, { textAlign }]}>
-          {t("dashboard.updated")} {lastUpdated.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
-        </Text>
-      )}
-
-      {isLoading && (
-        <View style={[styles.loadingRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <ActivityIndicator color={Colors.primary} size="small" />
-          <Text style={styles.loadingText}>{t("dashboard.fetching")}</Text>
-        </View>
-      )}
-
-      {error && (
-        <View style={[styles.errorBanner, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="alert-triangle" size={16} color={Colors.danger} />
-          <Text style={[styles.errorText, { textAlign }]}>{error}</Text>
-        </View>
-      )}
-
-      <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.orderStatus")}</Text>
-      <View style={styles.statsGrid}>
-        <StatCard
-          label={t("stat.paidPending")}
-          value={data.paid.count}
-          color={Colors.info}
-          subLabel={t("stat.estCommission")}
-          subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
-          isRTL={isRTL}
-        />
-        <StatCard
-          label={t("stat.receivedThisMonth")}
-          value={data.receivedThisMonth.count}
-          color={Colors.success}
-          subLabel={t("stat.estCommission")}
-          subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
-          isRTL={isRTL}
-        />
-        <StatCard
-          label={t("stat.receivedLastMonth")}
-          value={data.receivedLastMonth.count}
-          color={Colors.primary}
-          subLabel={t("stat.estCommission")}
-          subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
-          isRTL={isRTL}
-        />
-        <StatCard
-          label={t("stat.settledOrders")}
-          value={data.settled.count}
-          color={Colors.accent}
-          subLabel={t("stat.settledCommission")}
-          subValue={data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
-          isRTL={isRTL}
-        />
-        <StatCard
-          label={t("stat.canceledOrders")}
-          value={data.canceled.count}
-          color={Colors.danger}
-          subLabel={t("stat.commission")}
-          subValue={data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"}
-          isRTL={isRTL}
-        />
-      </View>
-
-      <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.commissionSummary")}</Text>
-      <View style={styles.commissionCard}>
-        <View style={[styles.commissionRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <View style={styles.commissionItem}>
-            <Text style={styles.commissionLabel}>{t("commission.paidOrders")}</Text>
-            <Text style={[styles.commissionValue, { color: Colors.info }]}>
-              {data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
-            </Text>
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.content, { paddingTop: topPad + 16 }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => loadDashboard(true)}
+            tintColor={Colors.primary}
+            colors={[Colors.primary]}
+          />
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.header, isRTL && { flexDirection: "row-reverse" }]}>
+          <View>
+            <Text style={[styles.greeting, { textAlign }]}>{t("dashboard.overview")}</Text>
+            <Text style={[styles.title, { textAlign }]}>{t("dashboard.appName")}</Text>
           </View>
-          <View style={styles.commissionDivider} />
-          <View style={styles.commissionItem}>
-            <Text style={styles.commissionLabel}>{t("commission.thisMonth")}</Text>
-            <Text style={[styles.commissionValue, { color: Colors.success }]}>
-              {data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
-            </Text>
-          </View>
-          <View style={styles.commissionDivider} />
-          <View style={styles.commissionItem}>
-            <Text style={styles.commissionLabel}>{t("commission.lastMonth")}</Text>
-            <Text style={[styles.commissionValue, { color: Colors.primary }]}>
-              {data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
-            </Text>
+          <View style={[styles.badge, { backgroundColor: Colors.success + "22" }]}>
+            <View style={[styles.badgeDot, { backgroundColor: Colors.success }]} />
+            <Text style={[styles.badgeText, { color: Colors.success }]}>{t("dashboard.live")}</Text>
           </View>
         </View>
-      </View>
-    </ScrollView>
+
+        {lastUpdated && (
+          <Text style={[styles.lastUpdated, { textAlign }]}>
+            {t("dashboard.updated")} {lastUpdated.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+          </Text>
+        )}
+
+        {isLoading && (
+          <View style={[styles.loadingRow, isRTL && { flexDirection: "row-reverse" }]}>
+            <ActivityIndicator color={Colors.primary} size="small" />
+            <Text style={styles.loadingText}>{t("dashboard.fetching")}</Text>
+          </View>
+        )}
+
+        {error && (
+          <View style={[styles.errorBanner, isRTL && { flexDirection: "row-reverse" }]}>
+            <Feather name="alert-triangle" size={16} color={Colors.danger} />
+            <Text style={[styles.errorText, { textAlign }]}>{error}</Text>
+          </View>
+        )}
+
+        <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.orderStatus")}</Text>
+        <View style={styles.statsGrid}>
+          <StatCard
+            label={t("stat.paidPending")}
+            value={data.paid.count}
+            color={Colors.info}
+            subLabel={t("stat.estCommission")}
+            subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+          />
+          <StatCard
+            label={t("stat.receivedThisMonth")}
+            value={data.receivedThisMonth.count}
+            color={Colors.success}
+            subLabel={t("stat.estCommission")}
+            subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+          />
+          <StatCard
+            label={t("stat.receivedLastMonth")}
+            value={data.receivedLastMonth.count}
+            color={Colors.primary}
+            subLabel={t("stat.estCommission")}
+            subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+          />
+
+          <StatCard
+            label={t("stat.settledOrders")}
+            value={isLoadingSettled ? "…" : data.settled.count}
+            color={Colors.accent}
+            subLabel={t("stat.settledCommission")}
+            subValue={isLoadingSettled ? "…" : data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            rangeLabel={getRangeLabel(settledRange)}
+            onRangePress={() => setShowDropdown("settled")}
+          />
+          <StatCard
+            label={t("stat.canceledOrders")}
+            value={isLoadingCanceled ? "…" : data.canceled.count}
+            color={Colors.danger}
+            subLabel={t("stat.commission")}
+            subValue={isLoadingCanceled ? "…" : data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            rangeLabel={getRangeLabel(canceledRange)}
+            onRangePress={() => setShowDropdown("canceled")}
+          />
+        </View>
+
+        <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.commissionSummary")}</Text>
+        <View style={styles.commissionCard}>
+          <View style={[styles.commissionRow, isRTL && { flexDirection: "row-reverse" }]}>
+            <View style={styles.commissionItem}>
+              <Text style={styles.commissionLabel}>{t("commission.paidOrders")}</Text>
+              <Text style={[styles.commissionValue, { color: Colors.info }]}>
+                {data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
+              </Text>
+            </View>
+            <View style={styles.commissionDivider} />
+            <View style={styles.commissionItem}>
+              <Text style={styles.commissionLabel}>{t("commission.thisMonth")}</Text>
+              <Text style={[styles.commissionValue, { color: Colors.success }]}>
+                {data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
+              </Text>
+            </View>
+            <View style={styles.commissionDivider} />
+            <View style={styles.commissionItem}>
+              <Text style={styles.commissionLabel}>{t("commission.lastMonth")}</Text>
+              <Text style={[styles.commissionValue, { color: Colors.primary }]}>
+                {data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <Modal
+        transparent
+        visible={showDropdown !== null}
+        animationType="fade"
+        onRequestClose={() => setShowDropdown(null)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowDropdown(null)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.dropdownCard}>
+                <Text style={[styles.dropdownTitle, { textAlign }]}>
+                  {showDropdown === "settled" ? t("stat.settledOrders") : t("stat.canceledOrders")}
+                </Text>
+                {RANGE_OPTIONS.map((opt) => {
+                  const isSelected = showDropdown === "settled"
+                    ? settledRange === opt.key
+                    : canceledRange === opt.key;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      style={[styles.dropdownOption, isSelected && styles.dropdownOptionSelected]}
+                      onPress={() =>
+                        showDropdown === "settled"
+                          ? handleSettledRangeSelect(opt.key)
+                          : handleCanceledRangeSelect(opt.key)
+                      }
+                    >
+                      <Text style={[styles.dropdownOptionText, isSelected && styles.dropdownOptionTextSelected]}>
+                        {opt.label}
+                      </Text>
+                      {isSelected && <Feather name="check" size={16} color={Colors.primary} />}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </>
   );
 }
 
@@ -381,5 +529,51 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_400Regular",
     textAlign: "center",
     lineHeight: 22,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  dropdownCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    width: "100%",
+    overflow: "hidden",
+    paddingVertical: 8,
+  },
+  dropdownTitle: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.cardBorder,
+  },
+  dropdownOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  dropdownOptionSelected: {
+    backgroundColor: Colors.primary + "15",
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    color: Colors.text,
+    fontFamily: "Inter_400Regular",
+  },
+  dropdownOptionTextSelected: {
+    color: Colors.primary,
+    fontFamily: "Inter_600SemiBold",
   },
 });

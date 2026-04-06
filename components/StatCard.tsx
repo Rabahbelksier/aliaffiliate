@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 
 interface StatCardProps {
@@ -10,9 +11,11 @@ interface StatCardProps {
   color?: string;
   onPress?: () => void;
   isRTL?: boolean;
+  rangeLabel?: string;
+  onRangePress?: () => void;
 }
 
-export function StatCard({ label, value, subLabel, subValue, color = Colors.primary, onPress, isRTL }: StatCardProps) {
+export function StatCard({ label, value, subLabel, subValue, color = Colors.primary, onPress, isRTL, rangeLabel, onRangePress }: StatCardProps) {
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
   return (
@@ -20,8 +23,18 @@ export function StatCard({ label, value, subLabel, subValue, color = Colors.prim
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
       onPress={onPress}
     >
-      <View style={isRTL ? { alignItems: "flex-end" } : undefined}>
+      <View style={[styles.topRow, isRTL && { flexDirection: "row-reverse" }]}>
         <View style={[styles.dot, { backgroundColor: color }]} />
+        {rangeLabel && onRangePress && (
+          <Pressable
+            onPress={onRangePress}
+            style={({ pressed }) => [styles.rangeBtn, { opacity: pressed ? 0.7 : 1 }]}
+            hitSlop={8}
+          >
+            <Text style={styles.rangeBtnText}>{rangeLabel}</Text>
+            <Feather name="chevron-down" size={10} color={Colors.textMuted} />
+          </Pressable>
+        )}
       </View>
       <Text style={[styles.value, { textAlign }]}>{value}</Text>
       <Text style={[styles.label, { textAlign }]}>{label}</Text>
@@ -45,11 +58,30 @@ const styles = StyleSheet.create({
     minWidth: "47%",
     flex: 1,
   },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginBottom: 12,
+  },
+  rangeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: Colors.cardBorder,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  rangeBtnText: {
+    fontSize: 10,
+    color: Colors.textMuted,
+    fontFamily: "Inter_500Medium",
   },
   value: {
     fontSize: 28,
