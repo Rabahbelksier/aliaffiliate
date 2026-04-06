@@ -36,8 +36,8 @@ const en: Translations = {
   "stat.commission": "Lost Commission",
 
   "commission.paidOrders": "Paid",
-  "commission.thisMonth": "Received This Month",
-  "commission.lastMonth": "Received Last Month",
+  "commission.thisMonth": "Paid next month (may increase)",
+  "commission.lastMonth": "Paid this month",
 
   "settled.title": "Settled",
   "settled.badge": "Completed",
@@ -131,8 +131,8 @@ const ar: Translations = {
   "stat.commission": "العمولة الضائعة",
 
   "commission.paidOrders": "المدفوعة",
-  "commission.thisMonth": "المستلمة هذا الشهر",
-  "commission.lastMonth": "المستلمة الشهر الماضي",
+  "commission.thisMonth": "تُدفع الشهر القادم (قد تزيد)",
+  "commission.lastMonth": "تُدفع هذا الشهر",
 
   "settled.title": "المسوّاة",
   "settled.badge": "مكتملة",

@@ -19,15 +19,16 @@ import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { fetchOrders, type AliOrder, getCurrentMonthRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
 
-type RangePeriod = "1m" | "6m" | "1y" | "2y" | "5y";
+type RangePeriod = "1m" | "2m" | "3m" | "4m" | "5m" | "6m";
 
-// Days used per period — capped at 179 max to stay under AliExpress 180-day API limit
+// Days used per period — all under the AliExpress 180-day API limit
 const RANGE_DAYS: Record<RangePeriod, number> = {
   "1m": 30,
-  "6m": 150,  // ~5 months in days, safe under 180-day limit
-  "1y": 179,  // max the API allows (180-day hard limit)
-  "2y": 179,  // same cap
-  "5y": 179,  // same cap
+  "2m": 60,
+  "3m": 90,
+  "4m": 120,
+  "5m": 150,
+  "6m": 179,
 };
 
 function getRangeByPeriod(days: number): { start: string; end: string } {
@@ -72,10 +73,10 @@ export default function DashboardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const [settledRange, setSettledRangeState] = useState<RangePeriod>("6m");
-  const [canceledRange, setCanceledRangeState] = useState<RangePeriod>("6m");
-  const settledRangeRef = useRef<RangePeriod>("6m");
-  const canceledRangeRef = useRef<RangePeriod>("6m");
+  const [settledRange, setSettledRangeState] = useState<RangePeriod>("5m");
+  const [canceledRange, setCanceledRangeState] = useState<RangePeriod>("5m");
+  const settledRangeRef = useRef<RangePeriod>("5m");
+  const canceledRangeRef = useRef<RangePeriod>("5m");
 
   const [showDropdown, setShowDropdown] = useState<null | "settled" | "canceled">(null);
 
@@ -89,11 +90,12 @@ export default function DashboardScreen() {
   }
 
   const RANGE_OPTIONS: Array<{ key: RangePeriod; label: string }> = [
-    { key: "1m", label: language === "ar" ? "شهر" : "Month" },
+    { key: "1m", label: language === "ar" ? "شهر" : "1 Month" },
+    { key: "2m", label: language === "ar" ? "شهرين" : "2 Months" },
+    { key: "3m", label: language === "ar" ? "3 أشهر" : "3 Months" },
+    { key: "4m", label: language === "ar" ? "4 أشهر" : "4 Months" },
+    { key: "5m", label: language === "ar" ? "5 أشهر" : "5 Months" },
     { key: "6m", label: language === "ar" ? "6 أشهر" : "6 Months" },
-    { key: "1y", label: language === "ar" ? "سنة" : "Year" },
-    { key: "2y", label: language === "ar" ? "سنتين" : "2 Years" },
-    { key: "5y", label: language === "ar" ? "5 سنوات" : "5 Years" },
   ];
 
   const getRangeLabel = (range: RangePeriod) =>
