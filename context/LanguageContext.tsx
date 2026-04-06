@@ -35,7 +35,7 @@ const en: Translations = {
   "stat.settledCommission": "Paid Commission",
   "stat.commission": "Lost Commission",
 
-  "commission.paidOrders": "Paid",
+  "commission.paidOrders": "Awaiting processing",
   "commission.thisMonth": "Paid next month (may increase)",
   "commission.lastMonth": "Paid this month",
 
@@ -130,7 +130,7 @@ const ar: Translations = {
   "stat.settledCommission": "عمولة تم دفعها",
   "stat.commission": "العمولة الضائعة",
 
-  "commission.paidOrders": "المدفوعة",
+  "commission.paidOrders": "في انتظار المعالجة",
   "commission.thisMonth": "تُدفع الشهر القادم (قد تزيد)",
   "commission.lastMonth": "تُدفع هذا الشهر",
 

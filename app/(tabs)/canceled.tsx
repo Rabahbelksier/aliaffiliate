@@ -6,7 +6,7 @@ import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Feather } from "@expo/vector-icons";
-import { getLast5MonthsRange } from "@/hooks/useOrders";
+import { getMaxAllowedRange } from "@/hooks/useOrders";
 
 export default function CanceledScreen() {
   const insets = useSafeAreaInsets();
@@ -15,7 +15,7 @@ export default function CanceledScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
-  const last5Months = getLast5MonthsRange();
+  const last6Months = getMaxAllowedRange();
 
   if (!isConfigured) {
     return (
@@ -37,8 +37,8 @@ export default function CanceledScreen() {
       </View>
       <OrdersList
         status="Invalid"
-        startTime={last5Months.start}
-        endTime={last5Months.end}
+        startTime={last6Months.start}
+        endTime={last6Months.end}
         timeType="1"
         emptyLabel={t("canceled.empty")}
       />

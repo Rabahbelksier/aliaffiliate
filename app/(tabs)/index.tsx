@@ -73,10 +73,10 @@ export default function DashboardScreen() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const [settledRange, setSettledRangeState] = useState<RangePeriod>("5m");
-  const [canceledRange, setCanceledRangeState] = useState<RangePeriod>("5m");
-  const settledRangeRef = useRef<RangePeriod>("5m");
-  const canceledRangeRef = useRef<RangePeriod>("5m");
+  const [settledRange, setSettledRangeState] = useState<RangePeriod>("6m");
+  const [canceledRange, setCanceledRangeState] = useState<RangePeriod>("6m");
+  const settledRangeRef = useRef<RangePeriod>("6m");
+  const canceledRangeRef = useRef<RangePeriod>("6m");
 
   const [showDropdown, setShowDropdown] = useState<null | "settled" | "canceled">(null);
 
