@@ -72,6 +72,16 @@ export function getLast5MonthsRange(): { start: string; end: string } {
   };
 }
 
+// Get date range from the 1st of the current month until now
+export function getCurrentMonthRange(): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+  return {
+    start: formatDateForApi(start),
+    end: formatDateForApi(now),
+  };
+}
+
 // Returns "YYYY-MM" string for a month offset (0 = this month, -1 = last month)
 export function getMonthString(monthOffset = 0): string {
   const now = new Date();

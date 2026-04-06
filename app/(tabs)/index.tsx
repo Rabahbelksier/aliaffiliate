@@ -14,7 +14,7 @@ import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { fetchOrders, type AliOrder, getLast5MonthsRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, getLast5MonthsRange, getCurrentMonthRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
 
 interface DashboardData {
   paid: { count: number; commission: number };
@@ -55,6 +55,7 @@ export default function DashboardScreen() {
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
+    const currentMonth = getCurrentMonthRange();
     const last5Months = getLast5MonthsRange();
     const nowStr = formatDateForApi(new Date());
     const thisMonthStr = getMonthString(0);
@@ -68,7 +69,7 @@ export default function DashboardScreen() {
 
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
-        fetchOrders({ ...base, status: "Payment Completed", start_time: last5Months.start, end_time: nowStr }),
+        fetchOrders({ ...base, status: "Payment Completed", start_time: currentMonth.start, end_time: currentMonth.end }),
         fetchOrders({ ...base, finished_month: thisMonthStr }),
         fetchOrders({ ...base, finished_month: lastMonthStr }),
         fetchOrders({ ...base, status: "Completed Settlement", start_time: last5Months.start, end_time: nowStr }),
