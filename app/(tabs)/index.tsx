@@ -21,17 +21,19 @@ import { fetchOrders, type AliOrder, getCurrentMonthRange, formatDateForApi, get
 
 type RangePeriod = "1m" | "6m" | "1y" | "2y" | "5y";
 
-const RANGE_MONTHS: Record<RangePeriod, number> = {
-  "1m": 1,
-  "6m": 6,
-  "1y": 12,
-  "2y": 24,
-  "5y": 60,
+// Days used per period — capped at 179 max to stay under AliExpress 180-day API limit
+const RANGE_DAYS: Record<RangePeriod, number> = {
+  "1m": 30,
+  "6m": 150,  // ~5 months in days, safe under 180-day limit
+  "1y": 179,  // max the API allows (180-day hard limit)
+  "2y": 179,  // same cap
+  "5y": 179,  // same cap
 };
 
-function getRangeByPeriod(months: number): { start: string; end: string } {
+function getRangeByPeriod(days: number): { start: string; end: string } {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() - months, now.getDate(), 0, 0, 0);
+  const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  start.setHours(0, 0, 0, 0);
   return { start: formatDateForApi(start), end: formatDateForApi(now) };
 }
 
@@ -106,8 +108,8 @@ export default function DashboardScreen() {
     const currentMonth = getCurrentMonthRange();
     const thisMonthStr = getMonthString(0);
     const lastMonthStr = getMonthString(-1);
-    const settledRangeObj = getRangeByPeriod(RANGE_MONTHS[settledRangeRef.current]);
-    const canceledRangeObj = getRangeByPeriod(RANGE_MONTHS[canceledRangeRef.current]);
+    const settledRangeObj = getRangeByPeriod(RANGE_DAYS[settledRangeRef.current]);
+    const canceledRangeObj = getRangeByPeriod(RANGE_DAYS[canceledRangeRef.current]);
 
     const b = {
       app_key: settings.app_key,
@@ -149,7 +151,7 @@ export default function DashboardScreen() {
   const loadSettledStat = useCallback(async (range: RangePeriod) => {
     if (!isConfigured) return;
     setIsLoadingSettled(true);
-    const rangeObj = getRangeByPeriod(RANGE_MONTHS[range]);
+    const rangeObj = getRangeByPeriod(RANGE_DAYS[range]);
     try {
       const res = await fetchOrders({
         app_key: settings.app_key,
@@ -170,7 +172,7 @@ export default function DashboardScreen() {
   const loadCanceledStat = useCallback(async (range: RangePeriod) => {
     if (!isConfigured) return;
     setIsLoadingCanceled(true);
-    const rangeObj = getRangeByPeriod(RANGE_MONTHS[range]);
+    const rangeObj = getRangeByPeriod(RANGE_DAYS[range]);
     try {
       const res = await fetchOrders({
         app_key: settings.app_key,
