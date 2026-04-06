@@ -82,6 +82,17 @@ export function getCurrentMonthRange(): { start: string; end: string } {
   };
 }
 
+// Get the maximum allowed range by the AliExpress API (179 days back from now)
+export function getMaxAllowedRange(): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(now.getTime() - 179 * 24 * 60 * 60 * 1000);
+  start.setHours(0, 0, 0, 0);
+  return {
+    start: formatDateForApi(start),
+    end: formatDateForApi(now),
+  };
+}
+
 // Returns "YYYY-MM" string for a month offset (0 = this month, -1 = last month)
 export function getMonthString(monthOffset = 0): string {
   const now = new Date();

@@ -12,7 +12,7 @@ import { OrdersList } from "@/components/OrdersList";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Feather } from "@expo/vector-icons";
-import { getCurrentMonthRange, getMonthString } from "@/hooks/useOrders";
+import { getMaxAllowedRange, getMonthString } from "@/hooks/useOrders";
 
 export default function OrdersScreen() {
   const insets = useSafeAreaInsets();
@@ -20,7 +20,7 @@ export default function OrdersScreen() {
   const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState(0);
 
-  const currentMonth = getCurrentMonthRange();
+  const pendingRange = getMaxAllowedRange();
   const thisMonthStr = getMonthString(0);
   const lastMonthStr = getMonthString(-1);
 
@@ -67,8 +67,8 @@ export default function OrdersScreen() {
         {activeTab === 0 && (
           <OrdersList
             status="Payment Completed"
-            startTime={currentMonth.start}
-            endTime={currentMonth.end}
+            startTime={pendingRange.start}
+            endTime={pendingRange.end}
             timeType="1"
             emptyLabel={t("orders.empty")}
           />

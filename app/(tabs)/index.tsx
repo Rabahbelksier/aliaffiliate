@@ -17,7 +17,7 @@ import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { fetchOrders, type AliOrder, getCurrentMonthRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, getMaxAllowedRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
 
 type RangePeriod = "1m" | "2m" | "3m" | "4m" | "5m" | "6m";
 
@@ -107,7 +107,7 @@ export default function DashboardScreen() {
     if (refresh) setIsRefreshing(true);
     else setIsLoading(true);
 
-    const currentMonth = getCurrentMonthRange();
+    const pendingRange = getMaxAllowedRange();
     const thisMonthStr = getMonthString(0);
     const lastMonthStr = getMonthString(-1);
     const settledRangeObj = getRangeByPeriod(RANGE_DAYS[settledRangeRef.current]);
@@ -121,7 +121,7 @@ export default function DashboardScreen() {
 
     try {
       const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
-        fetchOrders({ ...b, status: "Payment Completed", start_time: currentMonth.start, end_time: currentMonth.end }),
+        fetchOrders({ ...b, status: "Payment Completed", start_time: pendingRange.start, end_time: pendingRange.end }),
         fetchOrders({ ...b, finished_month: thisMonthStr }),
         fetchOrders({ ...b, finished_month: lastMonthStr }),
         fetchOrders({ ...b, status: "Completed Settlement", start_time: settledRangeObj.start, end_time: settledRangeObj.end }),
