@@ -299,6 +299,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/tracking-ids", async (req: Request, res: Response) => {
+    try {
+      const { app_key, app_secret } = req.body;
+      if (!app_key || !app_secret) {
+        return res.status(400).json({ error: "app_key and app_secret are required" });
+      }
+
+      const now = new Date();
+      const sixMonthsAgo = new Date(now.getTime() - 180 * 24 * 3600 * 1000);
+      const statuses = ["Payment Completed", "Income Settled", "Buyer Confirmed Receipt"];
+      const allIds = new Set<string>();
+
+      for (const status of statuses) {
+        try {
+          const page = await fetchOnePage({
+            app_key,
+            app_secret,
+            start_time: formatDate(sixMonthsAgo),
+            end_time: formatDate(now),
+            time_type: "1",
+            status,
+            page_no: "1",
+            page_size: "50",
+          });
+          for (const order of page.orders) {
+            if (order.tracking_id && order.tracking_id.trim()) {
+              allIds.add(order.tracking_id.trim());
+            }
+          }
+        } catch {}
+      }
+
+      return res.json({ tracking_ids: Array.from(allIds) });
+    } catch (error) {
+      console.error("Tracking IDs API error:", error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
   app.post("/api/links/generate", async (req: Request, res: Response) => {
     try {
       const { app_key, app_secret, source_values, tracking_id, promotion_link_type = 0 } = req.body;
