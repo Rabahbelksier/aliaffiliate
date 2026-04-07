@@ -95,10 +95,17 @@ export default function GeneratorScreen() {
   );
 
   const extractAliExpressUrl = (text: string): string | null => {
-    const pattern = /https?:\/\/(?:[a-z0-9-]+\.)*aliexpress\.com\/[^\s"'<>]*/gi;
-    const matches = text.match(pattern);
-    return matches && matches.length > 0 ? matches[0] : null;
+    // Extract all http/https URLs (stop at whitespace), then clean trailing punctuation
+    const urlPattern = /https?:\/\/\S+/gi;
+    const allUrls = (text.match(urlPattern) || []).map((url) =>
+      url.replace(/[\u200F\u200E\u200B\u00A0)>\]}"'.,;:!?]+$/, "")
+    );
+    const aliUrl = allUrls.find((url) => /aliexpress\.com/i.test(url));
+    return aliUrl ?? null;
   };
+
+  const hasAnyUrl = (text: string): boolean =>
+    /https?:\/\/\S+/i.test(text);
 
   const handleGenerate = async () => {
     setGenerateError(null);
@@ -118,7 +125,11 @@ export default function GeneratorScreen() {
 
     const extractedUrl = extractAliExpressUrl(rawText);
     if (!extractedUrl) {
-      setGenerateError(t("generator.errorInvalid"));
+      if (hasAnyUrl(rawText)) {
+        setGenerateError(t("generator.errorNotAliExpress"));
+      } else {
+        setGenerateError(t("generator.errorInvalid"));
+      }
       return;
     }
 
