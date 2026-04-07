@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
-  FlatList,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,8 +30,8 @@ interface GeneratedLink {
 interface LinkGenerateResponse {
   aliexpress_affiliate_link_generate_response: {
     resp_result: {
-      result_code: number;
-      result_msg: string;
+      resp_code: number;
+      resp_msg: string;
       result: {
         promotion_links: {
           promotion_link: GeneratedLink[];
@@ -49,6 +50,7 @@ export default function GeneratorScreen() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLoadingIds, setIsLoadingIds] = useState(false);
   const [idsError, setIdsError] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const [sourceUrl, setSourceUrl] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -131,8 +133,8 @@ export default function GeneratorScreen() {
       const data: LinkGenerateResponse = await res.json();
       const respResult = data?.aliexpress_affiliate_link_generate_response?.resp_result;
       if (!respResult) throw new Error(t("generator.errorApi"));
-      if (respResult.result_code !== 200) {
-        throw new Error(respResult.result_msg || t("generator.errorApi"));
+      if (respResult.resp_code !== 200) {
+        throw new Error(respResult.resp_msg || t("generator.errorApi"));
       }
       const promotionLink =
         respResult?.result?.promotion_links?.promotion_link?.[0]?.promotion_link;
@@ -179,7 +181,7 @@ export default function GeneratorScreen() {
       <Text style={[styles.title, { textAlign }]}>{t("generator.title")}</Text>
       <Text style={[styles.subtitle, { textAlign }]}>{t("generator.subtitle")}</Text>
 
-      {/* Tracking ID Selector */}
+      {/* Tracking ID Selector - Dropdown */}
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather name="tag" size={16} color={Colors.accent} />
@@ -213,44 +215,60 @@ export default function GeneratorScreen() {
             <Text style={styles.idsEmptyText}>{t("generator.noIds")}</Text>
           </View>
         ) : (
-          <FlatList
-            data={trackingIds}
-            keyExtractor={(item) => item}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsList}
-            scrollEnabled={!!trackingIds.length}
-            renderItem={({ item }) => {
-              const isSelected = selectedId === item;
-              return (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.chip,
-                    isSelected && styles.chipSelected,
-                    { opacity: pressed ? 0.75 : 1 },
-                  ]}
-                  onPress={() => setSelectedId(item)}
-                >
-                  {isSelected && (
-                    <Feather name="check" size={12} color={Colors.primary} />
-                  )}
-                  <Text
-                    style={[styles.chipText, isSelected && styles.chipTextSelected]}
-                  >
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            }}
-          />
-        )}
+          <View style={styles.dropdownContainer}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.dropdownButton,
+                dropdownOpen && styles.dropdownButtonOpen,
+                { opacity: pressed ? 0.85 : 1 },
+              ]}
+              onPress={() => setDropdownOpen((v) => !v)}
+            >
+              <Feather name="tag" size={14} color={Colors.primary} />
+              <Text style={styles.dropdownSelected} numberOfLines={1}>
+                {selectedId || t("generator.selectId")}
+              </Text>
+              <Feather
+                name={dropdownOpen ? "chevron-up" : "chevron-down"}
+                size={16}
+                color={Colors.textMuted}
+              />
+            </Pressable>
 
-        {selectedId && (
-          <View style={[styles.selectedBadge, isRTL && { flexDirection: "row-reverse" }]}>
-            <Feather name="check-circle" size={12} color={Colors.primary} />
-            <Text style={styles.selectedBadgeText} numberOfLines={1}>
-              {selectedId}
-            </Text>
+            {dropdownOpen && (
+              <View style={styles.dropdownList}>
+                {trackingIds.map((item) => {
+                  const isSelected = selectedId === item;
+                  return (
+                    <Pressable
+                      key={item}
+                      style={({ pressed }) => [
+                        styles.dropdownItem,
+                        isSelected && styles.dropdownItemSelected,
+                        { opacity: pressed ? 0.75 : 1 },
+                      ]}
+                      onPress={() => {
+                        setSelectedId(item);
+                        setDropdownOpen(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownItemText,
+                          isSelected && styles.dropdownItemTextSelected,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item}
+                      </Text>
+                      {isSelected && (
+                        <Feather name="check" size={14} color={Colors.primary} />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -417,48 +435,62 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 18,
   },
-  chipsList: {
-    padding: 12,
-    gap: 8,
+  dropdownContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  chip: {
+  dropdownButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    gap: 10,
     backgroundColor: Colors.surface,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  chipSelected: {
+  dropdownButtonOpen: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "18",
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
-  chipText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
+  dropdownSelected: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.text,
     fontFamily: "Inter_500Medium",
   },
-  chipTextSelected: {
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
+  dropdownList: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: Colors.primary,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: "hidden",
   },
-  selectedBadge: {
+  dropdownItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    justifyContent: "space-between",
+    paddingHorizontal: 14,
+    paddingVertical: 13,
     borderTopWidth: 1,
     borderTopColor: Colors.cardBorder,
   },
-  selectedBadgeText: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontFamily: "Inter_500Medium",
+  dropdownItemSelected: {
+    backgroundColor: Colors.primary + "14",
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontFamily: "Inter_400Regular",
     flex: 1,
+  },
+  dropdownItemTextSelected: {
+    color: Colors.primary,
+    fontFamily: "Inter_600SemiBold",
   },
   inputWrapper: {
     padding: 12,
