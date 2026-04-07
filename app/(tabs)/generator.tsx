@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,18 +9,17 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
-  Modal,
-  TouchableWithoutFeedback,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useColors } from "@/hooks/useColors";
 import { getApiUrl } from "@/lib/query-client";
 import { fetch as nativeFetch } from "expo/fetch";
+import type { AppColors } from "@/constants/colors";
 
 interface GeneratedLink {
   source_value: string;
@@ -41,10 +40,56 @@ interface LinkGenerateResponse {
   };
 }
 
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: 16 },
+    title: { fontSize: 28, color: c.text, fontFamily: "Inter_700Bold", letterSpacing: -0.5, marginBottom: 6 },
+    subtitle: { fontSize: 13, color: c.textMuted, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 24 },
+    section: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 14, overflow: "hidden" },
+    sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    sectionTitle: { flex: 1, fontSize: 12, color: c.textSecondary, fontFamily: "Inter_600SemiBold", letterSpacing: 0.5, textTransform: "uppercase" },
+    refreshBtn: { padding: 4 },
+    idsLoading: { flexDirection: "row", alignItems: "center", gap: 10, padding: 16 },
+    idsLoadingText: { fontSize: 13, color: c.textMuted, fontFamily: "Inter_400Regular" },
+    idsEmpty: { flexDirection: "row", alignItems: "center", gap: 8, padding: 16 },
+    idsEmptyText: { fontSize: 13, color: c.textMuted, fontFamily: "Inter_400Regular", flex: 1, lineHeight: 18 },
+    dropdownContainer: { paddingHorizontal: 12, paddingVertical: 10 },
+    dropdownButton: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: c.surface, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingVertical: 12 },
+    dropdownButtonOpen: { borderColor: c.primary, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+    dropdownSelected: { flex: 1, fontSize: 14, color: c.text, fontFamily: "Inter_500Medium" },
+    dropdownList: { backgroundColor: c.surface, borderWidth: 1, borderTopWidth: 0, borderColor: c.primary, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, overflow: "hidden" },
+    dropdownItem: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 13, borderTopWidth: 1, borderTopColor: c.cardBorder },
+    dropdownItemSelected: { backgroundColor: c.primary + "14" },
+    dropdownItemText: { fontSize: 14, color: c.textSecondary, fontFamily: "Inter_400Regular", flex: 1 },
+    dropdownItemTextSelected: { color: c.primary, fontFamily: "Inter_600SemiBold" },
+    inputWrapper: { padding: 12 },
+    textArea: { fontSize: 14, color: c.text, fontFamily: "Inter_400Regular", backgroundColor: c.surface, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, minHeight: 80, textAlignVertical: "top" },
+    errorBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, backgroundColor: c.danger + "22", borderRadius: 12, padding: 14, marginBottom: 14 },
+    errorText: { flex: 1, fontSize: 13, color: c.danger, fontFamily: "Inter_400Regular", lineHeight: 18 },
+    generateBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16, marginBottom: 20 },
+    generateBtnText: { fontSize: 16, color: "#fff", fontFamily: "Inter_700Bold" },
+    resultCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.success + "44", overflow: "hidden" },
+    resultHeader: { flexDirection: "row", alignItems: "center", padding: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    resultBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+    resultBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+    resultLink: { fontSize: 13, color: c.info, fontFamily: "Inter_400Regular", lineHeight: 20, padding: 14 },
+    resultDivider: { height: 1, backgroundColor: c.cardBorder, marginHorizontal: 14 },
+    copyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 14 },
+    copyBtnSuccess: { backgroundColor: c.success + "11" },
+    copyBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
+    unconfigured: { flex: 1, backgroundColor: c.background, alignItems: "center", justifyContent: "center", paddingHorizontal: 40, gap: 16 },
+    unconfiguredTitle: { fontSize: 22, color: c.text, fontFamily: "Inter_700Bold" },
+    unconfiguredText: { fontSize: 14, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
+  });
+}
+
 export default function GeneratorScreen() {
   const insets = useSafeAreaInsets();
   const { settings, isConfigured } = useSettings();
   const { t, isRTL } = useLanguage();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [trackingIds, setTrackingIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -95,7 +140,6 @@ export default function GeneratorScreen() {
   );
 
   const extractAliExpressUrl = (text: string): string | null => {
-    // Extract all http/https URLs (stop at whitespace), then clean trailing punctuation
     const urlPattern = /https?:\/\/\S+/gi;
     const allUrls = (text.match(urlPattern) || []).map((url) =>
       url.replace(/[\u200F\u200E\u200B\u00A0)>\]}"'.,;:!?]+$/, "")
@@ -180,7 +224,7 @@ export default function GeneratorScreen() {
   if (!isConfigured) {
     return (
       <View style={[styles.unconfigured, { paddingTop: topPad + 20 }]}>
-        <Feather name="link" size={52} color={Colors.textMuted} />
+        <Feather name="link" size={52} color={colors.textMuted} />
         <Text style={styles.unconfiguredTitle}>{t("generator.setupRequired")}</Text>
         <Text style={styles.unconfiguredText}>{t("generator.setupText")}</Text>
       </View>
@@ -200,10 +244,9 @@ export default function GeneratorScreen() {
       <Text style={[styles.title, { textAlign }]}>{t("generator.title")}</Text>
       <Text style={[styles.subtitle, { textAlign }]}>{t("generator.subtitle")}</Text>
 
-      {/* Tracking ID Selector - Dropdown */}
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="tag" size={16} color={Colors.accent} />
+          <Feather name="tag" size={16} color={colors.accent} />
           <Text style={styles.sectionTitle}>{t("generator.trackingId")}</Text>
           <Pressable
             style={({ pressed }) => [styles.refreshBtn, { opacity: pressed ? 0.6 : 1 }]}
@@ -211,26 +254,26 @@ export default function GeneratorScreen() {
             disabled={isLoadingIds}
           >
             {isLoadingIds ? (
-              <ActivityIndicator size={13} color={Colors.textMuted} />
+              <ActivityIndicator size={13} color={colors.textMuted} />
             ) : (
-              <Feather name="refresh-cw" size={13} color={Colors.textMuted} />
+              <Feather name="refresh-cw" size={13} color={colors.textMuted} />
             )}
           </Pressable>
         </View>
 
         {isLoadingIds ? (
           <View style={styles.idsLoading}>
-            <ActivityIndicator color={Colors.primary} />
+            <ActivityIndicator color={colors.primary} />
             <Text style={styles.idsLoadingText}>{t("generator.loadingIds")}</Text>
           </View>
         ) : idsError ? (
           <View style={[styles.idsEmpty, isRTL && { flexDirection: "row-reverse" }]}>
-            <Feather name="alert-circle" size={15} color={Colors.danger} />
-            <Text style={[styles.idsEmptyText, { color: Colors.danger }]}>{idsError}</Text>
+            <Feather name="alert-circle" size={15} color={colors.danger} />
+            <Text style={[styles.idsEmptyText, { color: colors.danger }]}>{idsError}</Text>
           </View>
         ) : trackingIds.length === 0 ? (
           <View style={[styles.idsEmpty, isRTL && { flexDirection: "row-reverse" }]}>
-            <Feather name="info" size={15} color={Colors.textMuted} />
+            <Feather name="info" size={15} color={colors.textMuted} />
             <Text style={styles.idsEmptyText}>{t("generator.noIds")}</Text>
           </View>
         ) : (
@@ -243,14 +286,14 @@ export default function GeneratorScreen() {
               ]}
               onPress={() => setDropdownOpen((v) => !v)}
             >
-              <Feather name="tag" size={14} color={Colors.primary} />
+              <Feather name="tag" size={14} color={colors.primary} />
               <Text style={styles.dropdownSelected} numberOfLines={1}>
                 {selectedId || t("generator.selectId")}
               </Text>
               <Feather
                 name={dropdownOpen ? "chevron-up" : "chevron-down"}
                 size={16}
-                color={Colors.textMuted}
+                color={colors.textMuted}
               />
             </Pressable>
 
@@ -281,7 +324,7 @@ export default function GeneratorScreen() {
                         {item}
                       </Text>
                       {isSelected && (
-                        <Feather name="check" size={14} color={Colors.primary} />
+                        <Feather name="check" size={14} color={colors.primary} />
                       )}
                     </Pressable>
                   );
@@ -292,10 +335,9 @@ export default function GeneratorScreen() {
         )}
       </View>
 
-      {/* Product Link Input */}
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="link-2" size={16} color={Colors.primary} />
+          <Feather name="link-2" size={16} color={colors.primary} />
           <Text style={styles.sectionTitle}>{t("generator.inputLabel")}</Text>
         </View>
         <View style={styles.inputWrapper}>
@@ -309,7 +351,7 @@ export default function GeneratorScreen() {
               setCopied(false);
             }}
             placeholder={t("generator.inputPlaceholder")}
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             multiline
             numberOfLines={3}
             autoCapitalize="none"
@@ -320,7 +362,7 @@ export default function GeneratorScreen() {
 
       {generateError && (
         <View style={[styles.errorBanner, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="alert-triangle" size={16} color={Colors.danger} />
+          <Feather name="alert-triangle" size={16} color={colors.danger} />
           <Text style={[styles.errorText, { textAlign }]}>{generateError}</Text>
         </View>
       )}
@@ -346,9 +388,9 @@ export default function GeneratorScreen() {
       {result && (
         <View style={styles.resultCard}>
           <View style={[styles.resultHeader, isRTL && { flexDirection: "row-reverse" }]}>
-            <View style={[styles.resultBadge, { backgroundColor: Colors.success + "22" }]}>
-              <Feather name="check-circle" size={14} color={Colors.success} />
-              <Text style={[styles.resultBadgeText, { color: Colors.success }]}>
+            <View style={[styles.resultBadge, { backgroundColor: colors.success + "22" }]}>
+              <Feather name="check-circle" size={14} color={colors.success} />
+              <Text style={[styles.resultBadgeText, { color: colors.success }]}>
                 {t("generator.resultTitle")}
               </Text>
             </View>
@@ -368,9 +410,9 @@ export default function GeneratorScreen() {
             <Feather
               name={copied ? "check" : "copy"}
               size={16}
-              color={copied ? Colors.success : Colors.primary}
+              color={copied ? colors.success : colors.primary}
             />
-            <Text style={[styles.copyBtnText, { color: copied ? Colors.success : Colors.primary }]}>
+            <Text style={[styles.copyBtnText, { color: copied ? colors.success : colors.primary }]}>
               {copied ? t("generator.copied") : t("generator.copyBtn")}
             </Text>
           </Pressable>
@@ -379,256 +421,3 @@ export default function GeneratorScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 28,
-    color: Colors.text,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-    marginBottom: 24,
-  },
-  section: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginBottom: 14,
-    overflow: "hidden",
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  sectionTitle: {
-    flex: 1,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  refreshBtn: {
-    padding: 4,
-  },
-  idsLoading: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    padding: 16,
-  },
-  idsLoadingText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-  },
-  idsEmpty: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    padding: 16,
-  },
-  idsEmptyText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-    lineHeight: 18,
-  },
-  dropdownContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  dropdownButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  dropdownButtonOpen: {
-    borderColor: Colors.primary,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-  },
-  dropdownSelected: {
-    flex: 1,
-    fontSize: 14,
-    color: Colors.text,
-    fontFamily: "Inter_500Medium",
-  },
-  dropdownList: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: Colors.primary,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    overflow: "hidden",
-  },
-  dropdownItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    borderTopWidth: 1,
-    borderTopColor: Colors.cardBorder,
-  },
-  dropdownItemSelected: {
-    backgroundColor: Colors.primary + "14",
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-  },
-  dropdownItemTextSelected: {
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
-  },
-  inputWrapper: {
-    padding: 12,
-  },
-  textArea: {
-    fontSize: 14,
-    color: Colors.text,
-    fontFamily: "Inter_400Regular",
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    backgroundColor: Colors.danger + "22",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 14,
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 13,
-    color: Colors.danger,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-  },
-  generateBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginBottom: 20,
-  },
-  generateBtnText: {
-    fontSize: 16,
-    color: "#fff",
-    fontFamily: "Inter_700Bold",
-  },
-  resultCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.success + "44",
-    overflow: "hidden",
-  },
-  resultHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  resultBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
-  resultBadgeText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  resultLink: {
-    fontSize: 13,
-    color: Colors.info,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 20,
-    padding: 14,
-  },
-  resultDivider: {
-    height: 1,
-    backgroundColor: Colors.cardBorder,
-    marginHorizontal: 14,
-  },
-  copyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    padding: 14,
-  },
-  copyBtnSuccess: {
-    backgroundColor: Colors.success + "11",
-  },
-  copyBtnText: {
-    fontSize: 15,
-    fontFamily: "Inter_600SemiBold",
-  },
-  unconfigured: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 40,
-    gap: 16,
-  },
-  unconfiguredTitle: {
-    fontSize: 22,
-    color: Colors.text,
-    fontFamily: "Inter_700Bold",
-  },
-  unconfiguredText: {
-    fontSize: 14,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-});

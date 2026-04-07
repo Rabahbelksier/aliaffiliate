@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -13,15 +13,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useColors } from "@/hooks/useColors";
 import { fetchOrders, type AliOrder, getMaxAllowedRange, formatDateForApi, getMonthString, getCurrentMonthRange } from "@/hooks/useOrders";
+import type { AppColors } from "@/constants/colors";
 
 type RangePeriod = "1m" | "2m" | "3m" | "4m" | "5m" | "6m";
 
-// Days used per period — all under the AliExpress 180-day API limit
 const RANGE_DAYS: Record<RangePeriod, number> = {
   "1m": 30,
   "2m": 60,
@@ -63,10 +63,49 @@ function sumCommission(orders: AliOrder[]): number {
   }, 0);
 }
 
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: 16, paddingBottom: 120 },
+    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 },
+    greeting: { fontSize: 13, color: c.textSecondary, fontFamily: "Inter_400Regular", letterSpacing: 0.5, textTransform: "uppercase" },
+    title: { fontSize: 28, color: c.text, fontFamily: "Inter_700Bold", letterSpacing: -0.5, marginTop: 2 },
+    badge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginTop: 6 },
+    badgeDot: { width: 6, height: 6, borderRadius: 3 },
+    badgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+    lastUpdated: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular", marginBottom: 20 },
+    loadingRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+    loadingText: { fontSize: 13, color: c.textSecondary, fontFamily: "Inter_400Regular" },
+    errorBanner: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: c.danger + "22", borderRadius: 10, padding: 12, marginBottom: 16 },
+    errorText: { fontSize: 13, color: c.danger, fontFamily: "Inter_400Regular", flex: 1 },
+    sectionTitle: { fontSize: 13, color: c.textSecondary, fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 12 },
+    statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 28 },
+    commissionCard: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, overflow: "hidden", marginBottom: 12 },
+    commissionRow: { flexDirection: "row", padding: 16 },
+    commissionItem: { flex: 1, alignItems: "center", gap: 6 },
+    commissionDivider: { width: 1, backgroundColor: c.cardBorder, marginVertical: 2 },
+    commissionLabel: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center" },
+    commissionValue: { fontSize: 18, fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
+    unconfigured: { flex: 1, backgroundColor: c.background, alignItems: "center", justifyContent: "center", paddingHorizontal: 40, gap: 16 },
+    unconfiguredTitle: { fontSize: 22, color: c.text, fontFamily: "Inter_700Bold" },
+    unconfiguredText: { fontSize: 14, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22 },
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", alignItems: "center", paddingHorizontal: 32 },
+    dropdownCard: { backgroundColor: c.card, borderRadius: 18, borderWidth: 1, borderColor: c.cardBorder, width: "100%", overflow: "hidden", paddingVertical: 8 },
+    dropdownTitle: { fontSize: 13, color: c.textMuted, fontFamily: "Inter_600SemiBold", letterSpacing: 0.5, textTransform: "uppercase", paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    dropdownOption: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 14 },
+    dropdownOptionSelected: { backgroundColor: c.primary + "15" },
+    dropdownOptionText: { fontSize: 16, color: c.text, fontFamily: "Inter_400Regular" },
+    dropdownOptionTextSelected: { color: c.primary, fontFamily: "Inter_600SemiBold" },
+  });
+}
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { settings, isConfigured } = useSettings();
   const { t, isRTL, language } = useLanguage();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [data, setData] = useState<DashboardData>(emptyData);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -148,7 +187,7 @@ export default function DashboardScreen() {
         canceled: { count: canceled.total_record_count, commission: sumCommission(canceled.orders) },
       });
       setLastUpdated(new Date());
-    } catch (err: any) {
+    } catch {
       setError(t("dashboard.error"));
     } finally {
       setIsLoading(false);
@@ -174,10 +213,7 @@ export default function DashboardScreen() {
         settled: { count: res.total_record_count, commission: sumCommission(res.orders) },
       }));
     } catch {
-      setData((prev) => ({
-        ...prev,
-        settled: { count: 0, commission: 0 },
-      }));
+      setData((prev) => ({ ...prev, settled: { count: 0, commission: 0 } }));
     } finally { setIsLoadingSettled(false); }
   }, [settings, isConfigured]);
 
@@ -199,10 +235,7 @@ export default function DashboardScreen() {
         canceled: { count: res.total_record_count, commission: sumCommission(res.orders) },
       }));
     } catch {
-      setData((prev) => ({
-        ...prev,
-        canceled: { count: 0, commission: 0 },
-      }));
+      setData((prev) => ({ ...prev, canceled: { count: 0, commission: 0 } }));
     } finally { setIsLoadingCanceled(false); }
   }, [settings, isConfigured]);
 
@@ -228,7 +261,7 @@ export default function DashboardScreen() {
   if (!isConfigured) {
     return (
       <View style={[styles.unconfigured, { paddingTop: topPad + 20 }]}>
-        <Feather name="settings" size={52} color={Colors.textMuted} />
+        <Feather name="settings" size={52} color={colors.textMuted} />
         <Text style={styles.unconfiguredTitle}>{t("dashboard.setupRequired")}</Text>
         <Text style={styles.unconfiguredText}>{t("dashboard.setupText")}</Text>
       </View>
@@ -246,8 +279,8 @@ export default function DashboardScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={() => loadDashboard(true)}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -257,9 +290,9 @@ export default function DashboardScreen() {
             <Text style={[styles.greeting, { textAlign }]}>{t("dashboard.overview")}</Text>
             <Text style={[styles.title, { textAlign }]}>{t("dashboard.appName")}</Text>
           </View>
-          <View style={[styles.badge, { backgroundColor: Colors.success + "22" }]}>
-            <View style={[styles.badgeDot, { backgroundColor: Colors.success }]} />
-            <Text style={[styles.badgeText, { color: Colors.success }]}>{t("dashboard.live")}</Text>
+          <View style={[styles.badge, { backgroundColor: colors.success + "22" }]}>
+            <View style={[styles.badgeDot, { backgroundColor: colors.success }]} />
+            <Text style={[styles.badgeText, { color: colors.success }]}>{t("dashboard.live")}</Text>
           </View>
         </View>
 
@@ -271,74 +304,26 @@ export default function DashboardScreen() {
 
         {isLoading && (
           <View style={[styles.loadingRow, isRTL && { flexDirection: "row-reverse" }]}>
-            <ActivityIndicator color={Colors.primary} size="small" />
+            <ActivityIndicator color={colors.primary} size="small" />
             <Text style={styles.loadingText}>{t("dashboard.fetching")}</Text>
           </View>
         )}
 
         {error && (
           <View style={[styles.errorBanner, isRTL && { flexDirection: "row-reverse" }]}>
-            <Feather name="alert-triangle" size={16} color={Colors.danger} />
+            <Feather name="alert-triangle" size={16} color={colors.danger} />
             <Text style={[styles.errorText, { textAlign }]}>{error}</Text>
           </View>
         )}
 
         <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.orderStatus")}</Text>
         <View style={styles.statsGrid}>
-          <StatCard
-            label={t("stat.paidPending")}
-            value={data.paid.count}
-            color={Colors.info}
-            subLabel={t("stat.estCommission")}
-            subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
-            isRTL={isRTL}
-          />
-          <StatCard
-            label={t("stat.paidPendingThisMonth")}
-            value={data.paidThisMonth.count}
-            color={Colors.info}
-            subLabel={t("stat.estCommission")}
-            subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"}
-            isRTL={isRTL}
-            badge={t("stat.thisMonth")}
-          />
-          <StatCard
-            label={t("stat.receivedThisMonth")}
-            value={data.receivedThisMonth.count}
-            color={Colors.success}
-            subLabel={t("stat.estCommission")}
-            subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
-            isRTL={isRTL}
-          />
-          <StatCard
-            label={t("stat.receivedLastMonth")}
-            value={data.receivedLastMonth.count}
-            color={Colors.primary}
-            subLabel={t("stat.estCommission")}
-            subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
-            isRTL={isRTL}
-          />
-
-          <StatCard
-            label={t("stat.settledOrders")}
-            value={isLoadingSettled ? "…" : data.settled.count}
-            color={Colors.accent}
-            subLabel={t("stat.settledCommission")}
-            subValue={isLoadingSettled ? "…" : data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
-            isRTL={isRTL}
-            rangeLabel={getRangeLabel(settledRange)}
-            onRangePress={() => setShowDropdown("settled")}
-          />
-          <StatCard
-            label={t("stat.canceledOrders")}
-            value={isLoadingCanceled ? "…" : data.canceled.count}
-            color={Colors.danger}
-            subLabel={t("stat.commission")}
-            subValue={isLoadingCanceled ? "…" : data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"}
-            isRTL={isRTL}
-            rangeLabel={getRangeLabel(canceledRange)}
-            onRangePress={() => setShowDropdown("canceled")}
-          />
+          <StatCard label={t("stat.paidPending")} value={data.paid.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
+          <StatCard label={t("stat.paidPendingThisMonth")} value={data.paidThisMonth.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} badge={t("stat.thisMonth")} />
+          <StatCard label={t("stat.receivedThisMonth")} value={data.receivedThisMonth.count} color={colors.success} subLabel={t("stat.estCommission")} subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
+          <StatCard label={t("stat.receivedLastMonth")} value={data.receivedLastMonth.count} color={colors.primary} subLabel={t("stat.estCommission")} subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
+          <StatCard label={t("stat.settledOrders")} value={isLoadingSettled ? "…" : data.settled.count} color={colors.accent} subLabel={t("stat.settledCommission")} subValue={isLoadingSettled ? "…" : data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"} isRTL={isRTL} rangeLabel={getRangeLabel(settledRange)} onRangePress={() => setShowDropdown("settled")} />
+          <StatCard label={t("stat.canceledOrders")} value={isLoadingCanceled ? "…" : data.canceled.count} color={colors.danger} subLabel={t("stat.commission")} subValue={isLoadingCanceled ? "…" : data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"} isRTL={isRTL} rangeLabel={getRangeLabel(canceledRange)} onRangePress={() => setShowDropdown("canceled")} />
         </View>
 
         <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.commissionSummary")}</Text>
@@ -346,21 +331,21 @@ export default function DashboardScreen() {
           <View style={[styles.commissionRow, isRTL && { flexDirection: "row-reverse" }]}>
             <View style={styles.commissionItem}>
               <Text style={styles.commissionLabel}>{t("commission.paidOrders")}</Text>
-              <Text style={[styles.commissionValue, { color: Colors.info }]}>
+              <Text style={[styles.commissionValue, { color: colors.info }]}>
                 {data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
               </Text>
             </View>
             <View style={styles.commissionDivider} />
             <View style={styles.commissionItem}>
               <Text style={styles.commissionLabel}>{t("commission.thisMonth")}</Text>
-              <Text style={[styles.commissionValue, { color: Colors.success }]}>
+              <Text style={[styles.commissionValue, { color: colors.success }]}>
                 {data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
               </Text>
             </View>
             <View style={styles.commissionDivider} />
             <View style={styles.commissionItem}>
               <Text style={styles.commissionLabel}>{t("commission.lastMonth")}</Text>
-              <Text style={[styles.commissionValue, { color: Colors.primary }]}>
+              <Text style={[styles.commissionValue, { color: colors.primary }]}>
                 {data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
               </Text>
             </View>
@@ -368,12 +353,7 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
-      <Modal
-        transparent
-        visible={showDropdown !== null}
-        animationType="fade"
-        onRequestClose={() => setShowDropdown(null)}
-      >
+      <Modal transparent visible={showDropdown !== null} animationType="fade" onRequestClose={() => setShowDropdown(null)}>
         <TouchableWithoutFeedback onPress={() => setShowDropdown(null)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
@@ -382,23 +362,15 @@ export default function DashboardScreen() {
                   {showDropdown === "settled" ? t("stat.settledOrders") : t("stat.canceledOrders")}
                 </Text>
                 {RANGE_OPTIONS.map((opt) => {
-                  const isSelected = showDropdown === "settled"
-                    ? settledRange === opt.key
-                    : canceledRange === opt.key;
+                  const isSelected = showDropdown === "settled" ? settledRange === opt.key : canceledRange === opt.key;
                   return (
                     <Pressable
                       key={opt.key}
                       style={[styles.dropdownOption, isSelected && styles.dropdownOptionSelected]}
-                      onPress={() =>
-                        showDropdown === "settled"
-                          ? handleSettledRangeSelect(opt.key)
-                          : handleCanceledRangeSelect(opt.key)
-                      }
+                      onPress={() => showDropdown === "settled" ? handleSettledRangeSelect(opt.key) : handleCanceledRangeSelect(opt.key)}
                     >
-                      <Text style={[styles.dropdownOptionText, isSelected && styles.dropdownOptionTextSelected]}>
-                        {opt.label}
-                      </Text>
-                      {isSelected && <Feather name="check" size={16} color={Colors.primary} />}
+                      <Text style={[styles.dropdownOptionText, isSelected && styles.dropdownOptionTextSelected]}>{opt.label}</Text>
+                      {isSelected && <Feather name="check" size={16} color={colors.primary} />}
                     </Pressable>
                   );
                 })}
@@ -410,197 +382,3 @@ export default function DashboardScreen() {
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingBottom: 120,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 4,
-  },
-  greeting: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_400Regular",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  title: {
-    fontSize: 28,
-    color: Colors.text,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.5,
-    marginTop: 2,
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginTop: 6,
-  },
-  badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-  },
-  lastUpdated: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    marginBottom: 20,
-  },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  loadingText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_400Regular",
-  },
-  errorBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: Colors.danger + "22",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    fontSize: 13,
-    color: Colors.danger,
-    fontFamily: "Inter_400Regular",
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    marginBottom: 12,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 28,
-  },
-  commissionCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    overflow: "hidden",
-    marginBottom: 12,
-  },
-  commissionRow: {
-    flexDirection: "row",
-    padding: 16,
-  },
-  commissionItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 6,
-  },
-  commissionDivider: {
-    width: 1,
-    backgroundColor: Colors.cardBorder,
-    marginVertical: 2,
-  },
-  commissionLabel: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-  },
-  commissionValue: {
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.3,
-  },
-  unconfigured: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 40,
-    gap: 16,
-  },
-  unconfiguredTitle: {
-    fontSize: 22,
-    color: Colors.text,
-    fontFamily: "Inter_700Bold",
-  },
-  unconfiguredText: {
-    fontSize: 14,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  dropdownCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    width: "100%",
-    overflow: "hidden",
-    paddingVertical: 8,
-  },
-  dropdownTitle: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  dropdownOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  dropdownOptionSelected: {
-    backgroundColor: Colors.primary + "15",
-  },
-  dropdownOptionText: {
-    fontSize: 16,
-    color: Colors.text,
-    fontFamily: "Inter_400Regular",
-  },
-  dropdownOptionTextSelected: {
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
-  },
-});

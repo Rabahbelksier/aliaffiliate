@@ -1,25 +1,14 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
 import { Image } from "expo-image";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
 import { useLanguage } from "@/context/LanguageContext";
+import { useColors } from "@/hooks/useColors";
 import type { AliOrder } from "@/hooks/useOrders";
+import type { AppColors } from "@/constants/colors";
 
 interface OrderCardProps {
   order: AliOrder;
-}
-
-function statusColor(status?: string): string {
-  switch (status) {
-    case "Payment Completed": return Colors.info;
-    case "Buyer Confirmed Receipt": return Colors.success;
-    case "Completed Settlement": return Colors.accent;
-    case "Settled": return Colors.accent;
-    case "Invalid": return Colors.danger;
-    case "Void": return Colors.danger;
-    default: return Colors.textMuted;
-  }
 }
 
 function statusLabel(status?: string, t?: (key: string) => string): string {
@@ -32,6 +21,18 @@ function statusLabel(status?: string, t?: (key: string) => string): string {
     case "Invalid": return translate("orderCard.canceled");
     case "Void": return translate("orderCard.canceled");
     default: return status || translate("orderCard.unknown");
+  }
+}
+
+function statusColor(status: string | undefined, c: AppColors): string {
+  switch (status) {
+    case "Payment Completed": return c.info;
+    case "Buyer Confirmed Receipt": return c.success;
+    case "Completed Settlement": return c.accent;
+    case "Settled": return c.accent;
+    case "Invalid": return c.danger;
+    case "Void": return c.danger;
+    default: return c.textMuted;
   }
 }
 
@@ -56,10 +57,36 @@ function calcCommission(amount?: string, rate?: string): string {
   return (a * r / 100).toFixed(2);
 }
 
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    card: { backgroundColor: c.card, borderRadius: 16, marginHorizontal: 16, marginBottom: 12, borderWidth: 1, borderColor: c.cardBorder, overflow: "hidden" },
+    row: { flexDirection: "row", padding: 14, gap: 12 },
+    image: { width: 72, height: 72, borderRadius: 10, backgroundColor: c.surface, flexShrink: 0 },
+    imagePlaceholder: { alignItems: "center", justifyContent: "center" },
+    info: { flex: 1, gap: 4 },
+    topRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    statusBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+    statusText: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
+    country: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular" },
+    title: { fontSize: 13, color: c.text, fontFamily: "Inter_500Medium", lineHeight: 18 },
+    metaRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    meta: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular" },
+    divider: { height: 1, backgroundColor: c.cardBorder, marginHorizontal: 14 },
+    financialRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, gap: 4 },
+    finItem: { flex: 1, alignItems: "center", gap: 2 },
+    finLabel: { fontSize: 10, color: c.textMuted, fontFamily: "Inter_400Regular" },
+    finValue: { fontSize: 13, color: c.text, fontFamily: "Inter_600SemiBold" },
+    finSep: { width: 1, height: 24, backgroundColor: c.cardBorder },
+  });
+}
+
 export function OrderCard({ order }: OrderCardProps) {
   const { t, isRTL } = useLanguage();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const commission = order.estimated_paid_amount || calcCommission(order.payment_amount, order.commission_rate);
-  const sColor = statusColor(order.status);
+  const sColor = statusColor(order.status, colors);
   const locale = isRTL ? "ar-SA" : "en-US";
 
   const handlePress = () => {
@@ -83,7 +110,7 @@ export function OrderCard({ order }: OrderCardProps) {
           />
         ) : (
           <View style={[styles.image, styles.imagePlaceholder]}>
-            <Feather name="package" size={24} color={Colors.textMuted} />
+            <Feather name="package" size={24} color={colors.textMuted} />
           </View>
         )}
 
@@ -104,7 +131,7 @@ export function OrderCard({ order }: OrderCardProps) {
           </Text>
 
           <View style={[styles.metaRow, isRTL && { flexDirection: "row-reverse" }]}>
-            <Feather name="calendar" size={11} color={Colors.textMuted} />
+            <Feather name="calendar" size={11} color={colors.textMuted} />
             <Text style={styles.meta}>
               {formatDate(order.created_time || order.paid_time, locale)}
             </Text>
@@ -112,7 +139,7 @@ export function OrderCard({ order }: OrderCardProps) {
 
           {order.tracking_id && (
             <View style={[styles.metaRow, isRTL && { flexDirection: "row-reverse" }]}>
-              <MaterialCommunityIcons name="tag-outline" size={11} color={Colors.textMuted} />
+              <MaterialCommunityIcons name="tag-outline" size={11} color={colors.textMuted} />
               <Text style={styles.meta}>{order.tracking_id}</Text>
             </View>
           )}
@@ -146,113 +173,13 @@ export function OrderCard({ order }: OrderCardProps) {
 
         <View style={styles.finItem}>
           <Text style={styles.finLabel}>{t("orderCard.commission")}</Text>
-          <Text style={[styles.finValue, { color: Colors.success }]}>
+          <Text style={[styles.finValue, { color: colors.success }]}>
             {commission !== "—" ? `$${parseFloat(commission).toFixed(2)}` : "—"}
           </Text>
         </View>
 
-        <Feather name="external-link" size={14} color={Colors.textMuted} style={{ alignSelf: "center" }} />
+        <Feather name="external-link" size={14} color={colors.textMuted} style={{ alignSelf: "center" }} />
       </View>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    overflow: "hidden",
-  },
-  row: {
-    flexDirection: "row",
-    padding: 14,
-    gap: 12,
-  },
-  image: {
-    width: 72,
-    height: 72,
-    borderRadius: 10,
-    backgroundColor: Colors.surface,
-    flexShrink: 0,
-  },
-  imagePlaceholder: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  info: {
-    flex: 1,
-    gap: 4,
-  },
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  statusBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  statusText: {
-    fontSize: 11,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.3,
-  },
-  country: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-  },
-  title: {
-    fontSize: 13,
-    color: Colors.text,
-    fontFamily: "Inter_500Medium",
-    lineHeight: 18,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  meta: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.cardBorder,
-    marginHorizontal: 14,
-  },
-  financialRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 4,
-  },
-  finItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  finLabel: {
-    fontSize: 10,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-  },
-  finValue: {
-    fontSize: 13,
-    color: Colors.text,
-    fontFamily: "Inter_600SemiBold",
-  },
-  finSep: {
-    width: 1,
-    height: 24,
-    backgroundColor: Colors.cardBorder,
-  },
-});

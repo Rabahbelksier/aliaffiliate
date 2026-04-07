@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,28 +9,52 @@ import {
   RefreshControl,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
 import { OrderCard } from "@/components/OrderCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage, translateApiError } from "@/context/LanguageContext";
+import { useColors } from "@/hooks/useColors";
 import { fetchOrders, type AliOrder, type FetchOrdersParams, formatDateForApi } from "@/hooks/useOrders";
+import type { AppColors } from "@/constants/colors";
 
 interface OrdersListProps {
-  /** Standard mode: filter by status */
   status?: string;
   startTime?: string;
   endTime?: string;
   timeType?: string;
-  /** Received mode: "YYYY-MM" — fetches all Buyer Confirmed Receipt orders filtered by finished_time month */
   finished_month?: string;
   emptyLabel?: string;
 }
 
 const PAGE_SIZE = 10;
 
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    list: { paddingTop: 12, paddingBottom: 120, flexGrow: 1 },
+    loadingOverlay: { position: "absolute", zIndex: 10, top: 80, left: 0, right: 0, alignItems: "center" },
+    emptyContainer: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, gap: 12, paddingHorizontal: 40 },
+    emptyTitle: { fontSize: 18, color: c.text, fontFamily: "Inter_600SemiBold" },
+    emptyText: { fontSize: 14, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20 },
+    retryBtn: { marginTop: 8, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: c.primary, borderRadius: 10 },
+    retryText: { color: "#fff", fontSize: 14, fontFamily: "Inter_600SemiBold" },
+    footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 12 },
+    countText: { fontSize: 12, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center" },
+    paginationRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+    pageBtn: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: c.card, borderWidth: 1, borderColor: c.cardBorder, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
+    pageBtnDisabled: { opacity: 0.4 },
+    pageBtnText: { fontSize: 14, color: c.text, fontFamily: "Inter_500Medium" },
+    pageBtnTextDisabled: { color: c.textMuted },
+    pageInfo: { flex: 1, alignItems: "center" },
+    pageInfoText: { fontSize: 13, color: c.textSecondary, fontFamily: "Inter_500Medium" },
+  });
+}
+
 export function OrdersList({ status, startTime, endTime, timeType, finished_month, emptyLabel }: OrdersListProps) {
   const { settings } = useSettings();
   const { t, isRTL } = useLanguage();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [orders, setOrders] = useState<AliOrder[]>([]);
   const [displayedOrders, setDisplayedOrders] = useState<AliOrder[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -51,14 +75,12 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
       let params: FetchOrdersParams;
 
       if (finished_month) {
-        // Received orders mode: server fetches all pages and filters by finished_time month
         params = {
           app_key: settings.app_key,
           app_secret: settings.app_secret,
           finished_month,
         };
       } else {
-        // Standard mode: pass-through to AliExpress API with pagination
         const now = new Date();
         const defaultStart = new Date(now.getTime() - 30 * 24 * 3600 * 1000);
         params = {
@@ -86,7 +108,6 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
         setTotalCount(data.total_record_count || allOrders.length);
 
         if (finished_month) {
-          // Client-side pagination over the already-filtered results
           const start = (page - 1) * PAGE_SIZE;
           setDisplayedOrders(allOrders.slice(start, start + PAGE_SIZE));
         } else {
@@ -104,7 +125,6 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
     }
   }, [settings, status, startTime, endTime, timeType, finished_month]);
 
-  // For finished_month mode: navigate pages without re-fetching
   const navigatePage = useCallback((page: number) => {
     if (finished_month && orders.length > 0) {
       const start = (page - 1) * PAGE_SIZE;
@@ -127,7 +147,7 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
     if (error) {
       return (
         <View style={styles.emptyContainer}>
-          <Feather name="wifi-off" size={40} color={Colors.danger} />
+          <Feather name="wifi-off" size={40} color={colors.danger} />
           <Text style={styles.emptyTitle}>{t("ordersList.connectionError")}</Text>
           <Text style={styles.emptyText}>{error}</Text>
           <Pressable style={styles.retryBtn} onPress={() => load(1)}>
@@ -140,7 +160,7 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
     if (apiError) {
       return (
         <View style={styles.emptyContainer}>
-          <Feather name="alert-circle" size={40} color={Colors.warning} />
+          <Feather name="alert-circle" size={40} color={colors.warning} />
           <Text style={styles.emptyTitle}>{t("ordersList.apiResponse")}</Text>
           <Text style={styles.emptyText}>{translateApiError(apiError, t)}</Text>
           <Pressable style={styles.retryBtn} onPress={() => load(1)}>
@@ -153,7 +173,7 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
 
     return (
       <View style={styles.emptyContainer}>
-        <Feather name="inbox" size={48} color={Colors.textMuted} />
+        <Feather name="inbox" size={48} color={colors.textMuted} />
         <Text style={styles.emptyTitle}>{t("ordersList.noOrders")}</Text>
         <Text style={styles.emptyText}>{emptyLabel || t("ordersList.noMatch")}</Text>
       </View>
@@ -174,8 +194,8 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
             onPress={() => pageNo > 1 && navigatePage(pageNo - 1)}
             disabled={pageNo <= 1 || isLoading}
           >
-            <Feather name={isRTL ? "chevron-right" : "chevron-left"} size={18} color={pageNo <= 1 ? Colors.textMuted : Colors.text} />
-            <Text style={[styles.pageBtnText, pageNo <= 1 && { color: Colors.textMuted }]}>{t("ordersList.prev")}</Text>
+            <Feather name={isRTL ? "chevron-right" : "chevron-left"} size={18} color={pageNo <= 1 ? colors.textMuted : colors.text} />
+            <Text style={[styles.pageBtnText, pageNo <= 1 && styles.pageBtnTextDisabled]}>{t("ordersList.prev")}</Text>
           </Pressable>
 
           <View style={styles.pageInfo}>
@@ -187,8 +207,8 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
             onPress={() => pageNo < totalPages && navigatePage(pageNo + 1)}
             disabled={pageNo >= totalPages || isLoading}
           >
-            <Text style={[styles.pageBtnText, pageNo >= totalPages && { color: Colors.textMuted }]}>{t("ordersList.next")}</Text>
-            <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={18} color={pageNo >= totalPages ? Colors.textMuted : Colors.text} />
+            <Text style={[styles.pageBtnText, pageNo >= totalPages && styles.pageBtnTextDisabled]}>{t("ordersList.next")}</Text>
+            <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={18} color={pageNo >= totalPages ? colors.textMuted : colors.text} />
           </Pressable>
         </View>
       )}
@@ -199,7 +219,7 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
     <View style={styles.container}>
       {isLoading && !isRefreshing && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
       <FlatList
@@ -213,8 +233,8 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={() => load(1, true)}
-            tintColor={Colors.primary}
-            colors={[Colors.primary]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         scrollEnabled={!!displayedOrders.length}
@@ -223,103 +243,3 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  list: {
-    paddingTop: 12,
-    paddingBottom: 120,
-    flexGrow: 1,
-  },
-  loadingOverlay: {
-    position: "absolute",
-    zIndex: 10,
-    top: 80,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 80,
-    gap: 12,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    color: Colors.text,
-    fontFamily: "Inter_600SemiBold",
-  },
-  emptyText: {
-    fontSize: 14,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  retryBtn: {
-    marginTop: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-  },
-  retryText: {
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
-    gap: 12,
-  },
-  countText: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center",
-  },
-  paginationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  pageBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  pageBtnDisabled: {
-    opacity: 0.4,
-  },
-  pageBtnText: {
-    fontSize: 14,
-    color: Colors.text,
-    fontFamily: "Inter_500Medium",
-  },
-  pageInfo: {
-    flex: 1,
-    alignItems: "center",
-  },
-  pageInfoText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_500Medium",
-  },
-});

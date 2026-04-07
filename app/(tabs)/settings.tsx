@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,16 +12,57 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage, translateApiError, type Language } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
+import { useColors } from "@/hooks/useColors";
 import { getApiUrl } from "@/lib/query-client";
 import { fetch as nativeFetch } from "expo/fetch";
+import type { AppColors } from "@/constants/colors";
+
+function makeStyles(c: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: 16 },
+    title: { fontSize: 28, color: c.text, fontFamily: "Inter_700Bold", letterSpacing: -0.5, marginBottom: 6 },
+    subtitle: { fontSize: 13, color: c.textMuted, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 24 },
+    section: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 16, overflow: "hidden" },
+    sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    sectionTitle: { fontSize: 13, color: c.textSecondary, fontFamily: "Inter_600SemiBold", letterSpacing: 0.5, textTransform: "uppercase" },
+    langRow: { flexDirection: "row", padding: 12, gap: 10 },
+    toggleRow: { flexDirection: "row", padding: 12, gap: 10 },
+    toggleBtn: { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: 10, backgroundColor: c.surface, borderWidth: 1, borderColor: c.cardBorder },
+    toggleBtnActive: { backgroundColor: c.primary, borderColor: c.primary },
+    toggleBtnText: { fontSize: 14, color: c.textSecondary, fontFamily: "Inter_500Medium" },
+    toggleBtnTextActive: { color: "#fff", fontFamily: "Inter_600SemiBold" },
+    field: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    label: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_500Medium", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 },
+    input: { fontSize: 15, color: c.text, fontFamily: "Inter_400Regular", paddingVertical: 8, paddingHorizontal: 12, backgroundColor: c.surface, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder },
+    inputRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    eyeBtn: { padding: 10, backgroundColor: c.surface, borderRadius: 10, borderWidth: 1, borderColor: c.cardBorder },
+    buttonGroup: { gap: 10, marginBottom: 16 },
+    saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: c.primary, borderRadius: 14, paddingVertical: 16 },
+    saveBtnText: { fontSize: 15, color: "#fff", fontFamily: "Inter_600SemiBold" },
+    testBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: c.card, borderRadius: 14, paddingVertical: 14, borderWidth: 1, borderColor: c.primary },
+    testBtnText: { fontSize: 15, color: c.primary, fontFamily: "Inter_600SemiBold" },
+    resultBanner: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 12, padding: 14, marginBottom: 16 },
+    resultText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
+    infoCard: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 16 },
+    infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+    infoText: { flex: 1, fontSize: 12, color: c.textMuted, fontFamily: "Inter_400Regular", lineHeight: 18 },
+    aboutRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    aboutLabel: { fontSize: 14, color: c.textSecondary, fontFamily: "Inter_400Regular" },
+    aboutValue: { fontSize: 14, color: c.text, fontFamily: "Inter_500Medium" },
+  });
+}
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { settings, updateSettings } = useSettings();
   const { t, language, setLanguage, isRTL } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [appKey, setAppKey] = useState(settings.app_key);
   const [appSecret, setAppSecret] = useState(settings.app_secret);
@@ -81,10 +122,6 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleLanguageChange = (lang: Language) => {
-    setLanguage(lang);
-  };
-
   return (
     <ScrollView
       style={styles.container}
@@ -98,34 +135,62 @@ export default function SettingsScreen() {
       <Text style={[styles.title, { textAlign }]}>{t("settings.title")}</Text>
       <Text style={[styles.subtitle, { textAlign }]}>{t("settings.subtitle")}</Text>
 
+      {/* Language */}
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="globe" size={16} color={Colors.primary} />
+          <Feather name="globe" size={16} color={colors.primary} />
           <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
         </View>
-        <View style={styles.langRow}>
+        <View style={[styles.langRow, isRTL && { flexDirection: "row-reverse" }]}>
           <Pressable
-            style={[styles.langBtn, language === "en" && styles.langBtnActive]}
-            onPress={() => handleLanguageChange("en")}
+            style={[styles.toggleBtn, language === "en" && styles.toggleBtnActive]}
+            onPress={() => setLanguage("en" as Language)}
           >
-            <Text style={[styles.langBtnText, language === "en" && styles.langBtnTextActive]}>
+            <Text style={[styles.toggleBtnText, language === "en" && styles.toggleBtnTextActive]}>
               {t("settings.english")}
             </Text>
           </Pressable>
           <Pressable
-            style={[styles.langBtn, language === "ar" && styles.langBtnActive]}
-            onPress={() => handleLanguageChange("ar")}
+            style={[styles.toggleBtn, language === "ar" && styles.toggleBtnActive]}
+            onPress={() => setLanguage("ar" as Language)}
           >
-            <Text style={[styles.langBtnText, language === "ar" && styles.langBtnTextActive]}>
+            <Text style={[styles.toggleBtnText, language === "ar" && styles.toggleBtnTextActive]}>
               {t("settings.arabic")}
             </Text>
           </Pressable>
         </View>
       </View>
 
+      {/* Appearance / Theme */}
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="key" size={16} color={Colors.primary} />
+          <Feather name="moon" size={16} color={colors.primary} />
+          <Text style={styles.sectionTitle}>{t("settings.appearance")}</Text>
+        </View>
+        <View style={[styles.toggleRow, isRTL && { flexDirection: "row-reverse" }]}>
+          <Pressable
+            style={[styles.toggleBtn, isDark && styles.toggleBtnActive]}
+            onPress={() => { if (!isDark) toggleTheme(); }}
+          >
+            <Text style={[styles.toggleBtnText, isDark && styles.toggleBtnTextActive]}>
+              {t("settings.themeDark")}
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[styles.toggleBtn, !isDark && styles.toggleBtnActive]}
+            onPress={() => { if (isDark) toggleTheme(); }}
+          >
+            <Text style={[styles.toggleBtnText, !isDark && styles.toggleBtnTextActive]}>
+              {t("settings.themeLight")}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* API Credentials */}
+      <View style={styles.section}>
+        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
+          <Feather name="key" size={16} color={colors.primary} />
           <Text style={styles.sectionTitle}>{t("settings.apiCredentials")}</Text>
         </View>
 
@@ -136,7 +201,7 @@ export default function SettingsScreen() {
             value={appKey}
             onChangeText={setAppKey}
             placeholder={t("settings.enterAppKey")}
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
             returnKeyType="next"
@@ -151,7 +216,7 @@ export default function SettingsScreen() {
               value={appSecret}
               onChangeText={setAppSecret}
               placeholder={t("settings.enterAppSecret")}
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               secureTextEntry={!showSecret}
@@ -161,7 +226,7 @@ export default function SettingsScreen() {
               style={styles.eyeBtn}
               onPress={() => setShowSecret(!showSecret)}
             >
-              <Feather name={showSecret ? "eye-off" : "eye"} size={18} color={Colors.textMuted} />
+              <Feather name={showSecret ? "eye-off" : "eye"} size={18} color={colors.textMuted} />
             </Pressable>
           </View>
         </View>
@@ -172,7 +237,7 @@ export default function SettingsScreen() {
           style={({ pressed }) => [
             styles.saveBtn,
             { opacity: pressed ? 0.85 : 1 },
-            saved && { backgroundColor: Colors.success },
+            saved && { backgroundColor: colors.success },
           ]}
           onPress={handleSave}
           disabled={isSaving}
@@ -193,10 +258,10 @@ export default function SettingsScreen() {
           disabled={isTesting}
         >
           {isTesting ? (
-            <ActivityIndicator color={Colors.primary} size="small" />
+            <ActivityIndicator color={colors.primary} size="small" />
           ) : (
             <>
-              <Feather name="wifi" size={16} color={Colors.primary} />
+              <Feather name="wifi" size={16} color={colors.primary} />
               <Text style={styles.testBtnText}>{t("settings.testConnection")}</Text>
             </>
           )}
@@ -204,13 +269,17 @@ export default function SettingsScreen() {
       </View>
 
       {testResult && (
-        <View style={[styles.resultBanner, { backgroundColor: testResult.ok ? Colors.success + "22" : Colors.danger + "22" }, isRTL && { flexDirection: "row-reverse" }]}>
+        <View style={[
+          styles.resultBanner,
+          { backgroundColor: testResult.ok ? colors.success + "22" : colors.danger + "22" },
+          isRTL && { flexDirection: "row-reverse" },
+        ]}>
           <Feather
             name={testResult.ok ? "check-circle" : "alert-circle"}
             size={16}
-            color={testResult.ok ? Colors.success : Colors.danger}
+            color={testResult.ok ? colors.success : colors.danger}
           />
-          <Text style={[styles.resultText, { color: testResult.ok ? Colors.success : Colors.danger, textAlign }]}>
+          <Text style={[styles.resultText, { color: testResult.ok ? colors.success : colors.danger, textAlign }]}>
             {testResult.message}
           </Text>
         </View>
@@ -218,14 +287,14 @@ export default function SettingsScreen() {
 
       <View style={styles.infoCard}>
         <View style={[styles.infoRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="shield" size={16} color={Colors.textMuted} />
+          <Feather name="shield" size={16} color={colors.textMuted} />
           <Text style={[styles.infoText, { textAlign }]}>{t("settings.securityNote")}</Text>
         </View>
       </View>
 
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="info" size={16} color={Colors.info} />
+          <Feather name="info" size={16} color={colors.info} />
           <Text style={styles.sectionTitle}>{t("settings.about")}</Text>
         </View>
         <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
@@ -244,209 +313,3 @@ export default function SettingsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 28,
-    color: Colors.text,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-    marginBottom: 24,
-  },
-  section: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginBottom: 16,
-    overflow: "hidden",
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  langRow: {
-    flexDirection: "row",
-    padding: 12,
-    gap: 10,
-  },
-  langBtn: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  langBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  langBtnText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_500Medium",
-  },
-  langBtnTextActive: {
-    color: "#fff",
-    fontFamily: "Inter_600SemiBold",
-  },
-  field: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  label: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontFamily: "Inter_500Medium",
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-    marginBottom: 6,
-  },
-  input: {
-    fontSize: 15,
-    color: Colors.text,
-    fontFamily: "Inter_400Regular",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: Colors.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  eyeBtn: {
-    padding: 10,
-    backgroundColor: Colors.surface,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  fieldHelper: {
-    fontSize: 11,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    marginTop: 6,
-    lineHeight: 16,
-  },
-  buttonGroup: {
-    gap: 10,
-    marginBottom: 16,
-  },
-  saveBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  saveBtnText: {
-    fontSize: 15,
-    color: "#fff",
-    fontFamily: "Inter_600SemiBold",
-  },
-  testBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: Colors.card,
-    borderRadius: 14,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  testBtnText: {
-    fontSize: 15,
-    color: Colors.primary,
-    fontFamily: "Inter_600SemiBold",
-  },
-  resultBanner: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  resultText: {
-    flex: 1,
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-  },
-  infoCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    padding: 14,
-    marginBottom: 16,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: Colors.textMuted,
-    fontFamily: "Inter_400Regular",
-    lineHeight: 18,
-  },
-  aboutRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  aboutLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontFamily: "Inter_400Regular",
-  },
-  aboutValue: {
-    fontSize: 14,
-    color: Colors.text,
-    fontFamily: "Inter_500Medium",
-  },
-});

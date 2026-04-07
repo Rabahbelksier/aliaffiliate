@@ -2,11 +2,11 @@ import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { NativeTabs, Icon, Label } from "expo-router/unstable-native-tabs";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Colors } from "@/constants/colors";
 import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 
 function NativeTabLayout() {
   const { t } = useLanguage();
@@ -42,7 +42,7 @@ function NativeTabLayout() {
 
 function ClassicTabLayout() {
   const { t } = useLanguage();
-  const isDark = true;
+  const { colors, isDark } = useTheme();
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
 
@@ -50,21 +50,21 @@ function ClassicTabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.tabInactive,
+        tabBarActiveTintColor: colors.tabActive,
+        tabBarInactiveTintColor: colors.tabInactive,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : Colors.tabBar,
+          backgroundColor: isIOS ? "transparent" : colors.tabBar,
           borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: Colors.tabBarBorder,
+          borderTopColor: colors.tabBarBorder,
           elevation: 0,
           ...(isWeb ? { height: 84 } : {}),
         },
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={90} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFill} />
           ) : isWeb ? (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.tabBar }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBar, borderTopWidth: 1, borderTopColor: colors.tabBarBorder }]} />
           ) : null,
       }}
     >

@@ -15,16 +15,17 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/lib/query-client";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { LanguageProvider } from "@/context/LanguageContext";
-import { Colors } from "@/constants/colors";
+import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 import { StatusBar } from "expo-status-bar";
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
+  const { colors, isDark } = useTheme();
   return (
     <>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerBackTitle: "Back", contentStyle: { backgroundColor: Colors.background } }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <Stack screenOptions={{ headerBackTitle: "Back", contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
     </>
@@ -50,15 +51,17 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <LanguageProvider>
-          <SettingsProvider>
-            <GestureHandlerRootView style={{ flex: 1, backgroundColor: Colors.background }}>
-              <KeyboardProvider>
-                <RootLayoutNav />
-              </KeyboardProvider>
-            </GestureHandlerRootView>
-          </SettingsProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <SettingsProvider>
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <KeyboardProvider>
+                  <RootLayoutNav />
+                </KeyboardProvider>
+              </GestureHandlerRootView>
+            </SettingsProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
