@@ -12,7 +12,7 @@ import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { OrderCard } from "@/components/OrderCard";
 import { useSettings } from "@/context/SettingsContext";
-import { useLanguage } from "@/context/LanguageContext";
+import { useLanguage, translateApiError } from "@/context/LanguageContext";
 import { fetchOrders, type AliOrder, type FetchOrdersParams, formatDateForApi } from "@/hooks/useOrders";
 
 interface OrdersListProps {
@@ -96,7 +96,7 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
       }
       setHasFetched(true);
     } catch (err: any) {
-      setError(err?.message || t("dashboard.error"));
+      setError(translateApiError(err?.message || "", t) || t("dashboard.error"));
       setHasFetched(true);
     } finally {
       setIsLoading(false);
@@ -142,7 +142,7 @@ export function OrdersList({ status, startTime, endTime, timeType, finished_mont
         <View style={styles.emptyContainer}>
           <Feather name="alert-circle" size={40} color={Colors.warning} />
           <Text style={styles.emptyTitle}>{t("ordersList.apiResponse")}</Text>
-          <Text style={styles.emptyText}>{apiError}</Text>
+          <Text style={styles.emptyText}>{translateApiError(apiError, t)}</Text>
           <Pressable style={styles.retryBtn} onPress={() => load(1)}>
             <Feather name="refresh-cw" size={14} color="#fff" />
             <Text style={styles.retryText}>{t("ordersList.retry")}</Text>

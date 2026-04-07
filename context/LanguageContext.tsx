@@ -103,6 +103,12 @@ const en: Translations = {
 
   "common.error": "Error",
   "common.back": "Back",
+
+  "apiError.signatureInvalid": "The request signature does not conform to platform standards",
+  "apiError.appKeyInvalid": "The specified App Key is invalid",
+  "apiError.unexpectedFormat": "Unexpected API response format",
+  "apiError.appKeySecretRequired": "App Key and App Secret are required",
+  "apiError.statusRequired": "Order status parameter is required",
 };
 
 const ar: Translations = {
@@ -135,8 +141,8 @@ const ar: Translations = {
   "stat.commission": "العمولة الضائعة",
 
   "commission.paidOrders": "في انتظار المعالجة",
-  "commission.thisMonth": "تُدفع الشهر القادم (قد تزيد)",
-  "commission.lastMonth": "تُدفع هذا الشهر",
+  "commission.thisMonth": "تدفع الشهر القادم (قد تزيد)",
+  "commission.lastMonth": "تدفع هذا الشهر",
 
   "settled.title": "المسوّاة",
   "settled.badge": "مكتملة",
@@ -200,9 +206,29 @@ const ar: Translations = {
 
   "common.error": "خطأ",
   "common.back": "رجوع",
+
+  "apiError.signatureInvalid": "توقيع الطلب لا يتوافق مع معايير المنصة",
+  "apiError.appKeyInvalid": "مفتاح التطبيق المحدد غير صالح",
+  "apiError.unexpectedFormat": "تنسيق استجابة API غير متوقع",
+  "apiError.appKeySecretRequired": "مفتاح التطبيق والسر مطلوبان",
+  "apiError.statusRequired": "معامل حالة الطلب مطلوب",
 };
 
 const translations: Record<Language, Translations> = { en, ar };
+
+const API_ERROR_MAP: Record<string, string> = {
+  "The request signature does not conform to platform standards": "apiError.signatureInvalid",
+  "The specified App Key is invalid": "apiError.appKeyInvalid",
+  "Unexpected API response format": "apiError.unexpectedFormat",
+  "app_key and app_secret are required": "apiError.appKeySecretRequired",
+  "status is required": "apiError.statusRequired",
+};
+
+export function translateApiError(msg: string, t: (key: string) => string): string {
+  const key = API_ERROR_MAP[msg];
+  if (key) return t(key);
+  return msg;
+}
 
 interface LanguageContextValue {
   language: Language;

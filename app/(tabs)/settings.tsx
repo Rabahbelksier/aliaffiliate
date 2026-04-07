@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { Colors } from "@/constants/colors";
 import { useSettings } from "@/context/SettingsContext";
-import { useLanguage, type Language } from "@/context/LanguageContext";
+import { useLanguage, translateApiError, type Language } from "@/context/LanguageContext";
 import { getApiUrl } from "@/lib/query-client";
 import { fetch as nativeFetch } from "expo/fetch";
 
@@ -75,7 +75,7 @@ export default function SettingsScreen() {
       }
       setTestResult({ ok: true, message: t("settings.testSuccess") });
     } catch (err: any) {
-      setTestResult({ ok: false, message: err?.message || t("settings.testFail") });
+      setTestResult({ ok: false, message: translateApiError(err?.message || "", t) || t("settings.testFail") });
     } finally {
       setIsTesting(false);
     }
