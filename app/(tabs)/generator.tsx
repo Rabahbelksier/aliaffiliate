@@ -94,6 +94,12 @@ export default function GeneratorScreen() {
     }, [fetchTrackingIds])
   );
 
+  const extractAliExpressUrl = (text: string): string | null => {
+    const pattern = /https?:\/\/(?:[a-z0-9-]+\.)*aliexpress\.com\/[^\s"'<>]*/gi;
+    const matches = text.match(pattern);
+    return matches && matches.length > 0 ? matches[0] : null;
+  };
+
   const handleGenerate = async () => {
     setGenerateError(null);
     setResult(null);
@@ -104,12 +110,14 @@ export default function GeneratorScreen() {
       return;
     }
 
-    const trimmedUrl = sourceUrl.trim();
-    if (!trimmedUrl) {
+    const rawText = sourceUrl.trim();
+    if (!rawText) {
       setGenerateError(t("generator.errorEmpty"));
       return;
     }
-    if (!trimmedUrl.includes("aliexpress.com")) {
+
+    const extractedUrl = extractAliExpressUrl(rawText);
+    if (!extractedUrl) {
       setGenerateError(t("generator.errorInvalid"));
       return;
     }
@@ -124,7 +132,7 @@ export default function GeneratorScreen() {
         body: JSON.stringify({
           app_key: settings.app_key,
           app_secret: settings.app_secret,
-          source_values: trimmedUrl,
+          source_values: extractedUrl,
           tracking_id: selectedId,
           promotion_link_type: 0,
         }),
