@@ -17,7 +17,7 @@ import { Colors } from "@/constants/colors";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { fetchOrders, type AliOrder, getMaxAllowedRange, formatDateForApi, getMonthString } from "@/hooks/useOrders";
+import { fetchOrders, type AliOrder, getMaxAllowedRange, formatDateForApi, getMonthString, getCurrentMonthRange } from "@/hooks/useOrders";
 
 type RangePeriod = "1m" | "2m" | "3m" | "4m" | "5m" | "6m";
 
@@ -40,6 +40,7 @@ function getRangeByPeriod(days: number): { start: string; end: string } {
 
 interface DashboardData {
   paid: { count: number; commission: number };
+  paidThisMonth: { count: number; commission: number };
   receivedThisMonth: { count: number; commission: number };
   receivedLastMonth: { count: number; commission: number };
   settled: { count: number; commission: number };
@@ -48,6 +49,7 @@ interface DashboardData {
 
 const emptyData: DashboardData = {
   paid: { count: 0, commission: 0 },
+  paidThisMonth: { count: 0, commission: 0 },
   receivedThisMonth: { count: 0, commission: 0 },
   receivedLastMonth: { count: 0, commission: 0 },
   settled: { count: 0, commission: 0 },
@@ -108,6 +110,7 @@ export default function DashboardScreen() {
     else setIsLoading(true);
 
     const pendingRange = getMaxAllowedRange();
+    const currentMonthRange = getCurrentMonthRange();
     const thisMonthStr = getMonthString(0);
     const lastMonthStr = getMonthString(-1);
     const settledRangeObj = getRangeByPeriod(RANGE_DAYS[settledRangeRef.current]);
@@ -120,8 +123,9 @@ export default function DashboardScreen() {
     };
 
     try {
-      const [paidRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
+      const [paidRes, paidThisMonthRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
         fetchOrders({ ...b, status: "Payment Completed", start_time: pendingRange.start, end_time: pendingRange.end }),
+        fetchOrders({ ...b, status: "Payment Completed", start_time: currentMonthRange.start, end_time: currentMonthRange.end }),
         fetchOrders({ ...b, finished_month: thisMonthStr }),
         fetchOrders({ ...b, finished_month: lastMonthStr }),
         fetchOrders({ ...b, status: "Completed Settlement", start_time: settledRangeObj.start, end_time: settledRangeObj.end }),
@@ -129,6 +133,7 @@ export default function DashboardScreen() {
       ]);
 
       const paid = paidRes.status === "fulfilled" ? paidRes.value : { orders: [], total_record_count: 0 };
+      const paidThisMonth = paidThisMonthRes.status === "fulfilled" ? paidThisMonthRes.value : { orders: [], total_record_count: 0 };
       const thisM = thisMonthRes.status === "fulfilled" ? thisMonthRes.value : { orders: [], total_record_count: 0 };
       const lastM = lastMonthRes.status === "fulfilled" ? lastMonthRes.value : { orders: [], total_record_count: 0 };
       const settled = settledRes.status === "fulfilled" ? settledRes.value : { orders: [], total_record_count: 0 };
@@ -136,6 +141,7 @@ export default function DashboardScreen() {
 
       setData({
         paid: { count: paid.total_record_count, commission: sumCommission(paid.orders) },
+        paidThisMonth: { count: paidThisMonth.total_record_count, commission: sumCommission(paidThisMonth.orders) },
         receivedThisMonth: { count: thisM.total_record_count, commission: sumCommission(thisM.orders) },
         receivedLastMonth: { count: lastM.total_record_count, commission: sumCommission(lastM.orders) },
         settled: { count: settled.total_record_count, commission: sumCommission(settled.orders) },
@@ -286,6 +292,15 @@ export default function DashboardScreen() {
             subLabel={t("stat.estCommission")}
             subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
             isRTL={isRTL}
+          />
+          <StatCard
+            label={t("stat.paidPendingThisMonth")}
+            value={data.paidThisMonth.count}
+            color={Colors.info}
+            subLabel={t("stat.estCommission")}
+            subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            badge={t("stat.thisMonth")}
           />
           <StatCard
             label={t("stat.receivedThisMonth")}

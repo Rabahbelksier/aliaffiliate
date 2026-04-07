@@ -13,9 +13,10 @@ interface StatCardProps {
   isRTL?: boolean;
   rangeLabel?: string;
   onRangePress?: () => void;
+  badge?: string;
 }
 
-export function StatCard({ label, value, subLabel, subValue, color = Colors.primary, onPress, isRTL, rangeLabel, onRangePress }: StatCardProps) {
+export function StatCard({ label, value, subLabel, subValue, color = Colors.primary, onPress, isRTL, rangeLabel, onRangePress, badge }: StatCardProps) {
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
   return (
@@ -25,6 +26,11 @@ export function StatCard({ label, value, subLabel, subValue, color = Colors.prim
     >
       <View style={[styles.topRow, isRTL && { flexDirection: "row-reverse" }]}>
         <View style={[styles.dot, { backgroundColor: color }]} />
+        {badge && (
+          <View style={[styles.badge, { backgroundColor: color + "22" }]}>
+            <Text style={[styles.badgeText, { color }]}>{badge}</Text>
+          </View>
+        )}
         {rangeLabel && onRangePress && (
           <Pressable
             onPress={onRangePress}
@@ -68,6 +74,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontFamily: "Inter_600SemiBold",
   },
   rangeBtn: {
     flexDirection: "row",

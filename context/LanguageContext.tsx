@@ -27,6 +27,8 @@ const en: Translations = {
   "dashboard.setupText": "Go to Settings and enter your AliExpress Affiliate App Key and Secret to get started.",
 
   "stat.paidPending": "Paid – Pending Delivery",
+  "stat.paidPendingThisMonth": "Paid – Pending Delivery",
+  "stat.thisMonth": "This Month",
   "stat.receivedThisMonth": "Received This Month",
   "stat.receivedLastMonth": "Received Last Month",
   "stat.settledOrders": "Settled Orders",
@@ -122,6 +124,8 @@ const ar: Translations = {
   "dashboard.setupText": "اذهب إلى الإعدادات وأدخل مفتاح التطبيق والسر الخاص بحسابك في AliExpress للبدء.",
 
   "stat.paidPending": "مدفوعة – بانتظار التسليم",
+  "stat.paidPendingThisMonth": "مدفوعة – بانتظار التسليم",
+  "stat.thisMonth": "هذا الشهر",
   "stat.receivedThisMonth": "مستلمة هذا الشهر",
   "stat.receivedLastMonth": "مستلمة الشهر الماضي",
   "stat.settledOrders": "طلبات تمت تسويتها",
