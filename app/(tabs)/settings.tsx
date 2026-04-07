@@ -25,6 +25,7 @@ export default function SettingsScreen() {
 
   const [appKey, setAppKey] = useState(settings.app_key);
   const [appSecret, setAppSecret] = useState(settings.app_secret);
+  const [trackingId, setTrackingId] = useState(settings.tracking_id || "");
   const [showSecret, setShowSecret] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -41,7 +42,7 @@ export default function SettingsScreen() {
       return;
     }
     setIsSaving(true);
-    await updateSettings({ app_key: appKey.trim(), app_secret: appSecret.trim() });
+    await updateSettings({ app_key: appKey.trim(), app_secret: appSecret.trim(), tracking_id: trackingId.trim() });
     setIsSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -164,6 +165,21 @@ export default function SettingsScreen() {
               <Feather name={showSecret ? "eye-off" : "eye"} size={18} color={Colors.textMuted} />
             </Pressable>
           </View>
+        </View>
+
+        <View style={[styles.field, { borderBottomWidth: 0 }]}>
+          <Text style={[styles.label, { textAlign }]}>{t("settings.trackingId")}</Text>
+          <TextInput
+            style={[styles.input, { textAlign }]}
+            value={trackingId}
+            onChangeText={setTrackingId}
+            placeholder={t("settings.enterTrackingId")}
+            placeholderTextColor={Colors.textMuted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="done"
+          />
+          <Text style={[styles.fieldHelper, { textAlign }]}>{t("settings.trackingIdHelper")}</Text>
         </View>
       </View>
 
@@ -354,6 +370,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
+  },
+  fieldHelper: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontFamily: "Inter_400Regular",
+    marginTop: 6,
+    lineHeight: 16,
   },
   buttonGroup: {
     gap: 10,

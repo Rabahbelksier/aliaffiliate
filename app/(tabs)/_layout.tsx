@@ -28,6 +28,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "xmark.circle", selected: "xmark.circle.fill" }} />
         <Label>{t("tab.canceled")}</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="generator">
+        <Icon sf={{ default: "link.badge.plus", selected: "link.badge.plus" }} />
+        <Label>{t("tab.generator")}</Label>
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="settings">
         <Icon sf={{ default: "gearshape", selected: "gearshape.fill" }} />
         <Label>{t("tab.settings")}</Label>
@@ -97,6 +101,15 @@ function ClassicTabLayout() {
           title: t("tab.canceled"),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="close-circle" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="generator"
+        options={{
+          title: t("tab.generator"),
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="link" size={size} color={color} />
           ),
         }}
       />

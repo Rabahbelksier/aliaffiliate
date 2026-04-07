@@ -299,6 +299,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/links/generate", async (req: Request, res: Response) => {
+    try {
+      const { app_key, app_secret, source_values, tracking_id, promotion_link_type = 0 } = req.body;
+
+      if (!app_key || !app_secret) {
+        return res.status(400).json({ error: "app_key and app_secret are required" });
+      }
+      if (!source_values) {
+        return res.status(400).json({ error: "source_values is required" });
+      }
+
+      const timestamp = String(Date.now());
+      const reqParams: Record<string, string> = {
+        app_key,
+        timestamp,
+        sign_method: "md5",
+        v: "2.0",
+        method: "aliexpress.affiliate.link.generate",
+        source_values: String(source_values),
+        promotion_link_type: String(promotion_link_type),
+        tracking_id: String(tracking_id || ""),
+      };
+
+      reqParams.sign = generateSign(reqParams, app_secret);
+
+      const postData = Object.entries(reqParams)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&");
+
+      const responseText = await httpPost(postData);
+      const responseJson = JSON.parse(responseText);
+
+      console.log("Link generate API response:", JSON.stringify(responseJson).slice(0, 500));
+
+      return res.json(responseJson);
+    } catch (error) {
+      console.error("Link generate API error:", error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

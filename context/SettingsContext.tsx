@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 interface Settings {
   app_key: string;
   app_secret: string;
+  tracking_id: string;
 }
 
 interface SettingsContextValue {
@@ -18,6 +19,7 @@ const STORAGE_KEY = "@aliaffiliate_settings";
 const defaultSettings: Settings = {
   app_key: "",
   app_secret: "",
+  tracking_id: "",
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
