@@ -116,7 +116,7 @@ export default function AboutScreen() {
           </View>
           <View style={[styles.infoRowLast, isRTL && { flexDirection: "row-reverse" }]}>
             <Text style={styles.infoLabel}>{t("about.platform")}</Text>
-            <Text style={styles.infoValue}>iOS & Android</Text>
+            <Text style={styles.infoValue}>Android</Text>
           </View>
         </View>
 

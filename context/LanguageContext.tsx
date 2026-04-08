@@ -110,7 +110,7 @@ const en: Translations = {
   "legal.disclaimer": "Disclaimer",
   "legal.terms": "Terms of Service",
   "legal.privacy": "Privacy Policy",
-  "legal.about": "About AliAffiliate",
+  "legal.about": "About the app",
   "legal.lastUpdated": "Effective: April 2025",
   "legal.footerNote": "This document is subject to change. Please review periodically.",
 
@@ -259,7 +259,7 @@ const ar: Translations = {
   "legal.disclaimer": "إخلاء المسؤولية",
   "legal.terms": "شروط الخدمة",
   "legal.privacy": "سياسة الخصوصية",
-  "legal.about": "حول AliAffiliate",
+  "legal.about": "حول التطبيق",
   "legal.lastUpdated": "ساري من: أبريل 2025",
   "legal.footerNote": "هذه الوثيقة قابلة للتغيير. يُرجى مراجعتها بصفة دورية.",
 
