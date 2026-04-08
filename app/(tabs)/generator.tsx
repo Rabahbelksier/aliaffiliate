@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,8 +11,8 @@ import {
   Alert,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -20,6 +20,10 @@ import { useColors } from "@/hooks/useColors";
 import { getApiUrl } from "@/lib/query-client";
 import { fetch as nativeFetch } from "expo/fetch";
 import type { AppColors } from "@/constants/colors";
+
+const TRACKING_IDS_KEY = "@aliaffiliate_tracking_ids";
+const SELECTED_ID_KEY = "@aliaffiliate_selected_tracking_id";
+const DEFAULT_TRACKING_ID = "default";
 
 interface GeneratedLink {
   source_value: string;
@@ -107,6 +111,35 @@ export default function GeneratorScreen() {
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
   const textAlign = isRTL ? ("right" as const) : ("left" as const);
 
+  const pickDefaultId = useCallback((ids: string[], savedId?: string | null): string | null => {
+    if (!ids.length) return null;
+    if (savedId && ids.includes(savedId)) return savedId;
+    if (ids.includes(DEFAULT_TRACKING_ID)) return DEFAULT_TRACKING_ID;
+    return ids[0];
+  }, []);
+
+  useEffect(() => {
+    if (!isConfigured) return;
+    (async () => {
+      try {
+        const [cachedIdsRaw, cachedSelectedId] = await Promise.all([
+          AsyncStorage.getItem(TRACKING_IDS_KEY),
+          AsyncStorage.getItem(SELECTED_ID_KEY),
+        ]);
+        if (cachedIdsRaw) {
+          const ids: string[] = JSON.parse(cachedIdsRaw);
+          setTrackingIds(ids);
+          const picked = pickDefaultId(ids, cachedSelectedId);
+          setSelectedId(picked);
+        } else {
+          await fetchTrackingIds();
+        }
+      } catch {
+        await fetchTrackingIds();
+      }
+    })();
+  }, [isConfigured]);
+
   const fetchTrackingIds = useCallback(async () => {
     if (!isConfigured) return;
     setIsLoadingIds(true);
@@ -123,21 +156,22 @@ export default function GeneratorScreen() {
       const data: { tracking_ids: string[] } = await res.json();
       const ids = data.tracking_ids || [];
       setTrackingIds(ids);
-      if (ids.length > 0 && !selectedId) {
-        setSelectedId(ids[0]);
-      }
+      await AsyncStorage.setItem(TRACKING_IDS_KEY, JSON.stringify(ids));
+      const picked = pickDefaultId(ids, selectedId);
+      setSelectedId(picked);
+      if (picked) await AsyncStorage.setItem(SELECTED_ID_KEY, picked);
     } catch {
       setIdsError(t("generator.errorLoadingIds"));
     } finally {
       setIsLoadingIds(false);
     }
-  }, [isConfigured, settings.app_key, settings.app_secret]);
+  }, [isConfigured, settings.app_key, settings.app_secret, selectedId, pickDefaultId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchTrackingIds();
-    }, [fetchTrackingIds])
-  );
+  const handleSelectId = useCallback(async (id: string) => {
+    setSelectedId(id);
+    setDropdownOpen(false);
+    await AsyncStorage.setItem(SELECTED_ID_KEY, id);
+  }, []);
 
   const extractAliExpressUrl = (text: string): string | null => {
     const urlPattern = /https?:\/\/\S+/gi;
@@ -309,10 +343,7 @@ export default function GeneratorScreen() {
                         isSelected && styles.dropdownItemSelected,
                         { opacity: pressed ? 0.75 : 1 },
                       ]}
-                      onPress={() => {
-                        setSelectedId(item);
-                        setDropdownOpen(false);
-                      }}
+                      onPress={() => handleSelectId(item)}
                     >
                       <Text
                         style={[

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Platform, Image } from "react-native";
 import { Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -12,7 +12,7 @@ function makeStyles(c: AppColors) {
     container: { flex: 1, backgroundColor: c.background },
     content: { paddingHorizontal: 20 },
     appHeader: { alignItems: "center", marginBottom: 28, marginTop: 8 },
-    appLogo: { width: 80, height: 80, borderRadius: 22, backgroundColor: c.primary, alignItems: "center", justifyContent: "center", marginBottom: 14, shadowColor: c.primary, shadowOpacity: 0.3, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
+    appLogo: { width: 80, height: 80, borderRadius: 22, marginBottom: 14, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8, overflow: "hidden" },
     appName: { fontSize: 26, color: c.text, fontFamily: "Inter_700Bold", letterSpacing: -0.5, marginBottom: 4 },
     appTagline: { fontSize: 14, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 20, paddingHorizontal: 20 },
     versionBadge: { marginTop: 10, paddingHorizontal: 14, paddingVertical: 5, backgroundColor: c.surface, borderRadius: 20, borderWidth: 1, borderColor: c.cardBorder },
@@ -70,9 +70,11 @@ export default function AboutScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.appHeader}>
-          <View style={styles.appLogo}>
-            <Feather name="trending-up" size={38} color="#fff" />
-          </View>
+          <Image
+            source={require("../assets/images/icon.png")}
+            style={styles.appLogo}
+            resizeMode="cover"
+          />
           <Text style={styles.appName}>AliAffiliate</Text>
           <Text style={styles.appTagline}>{t("about.tagline")}</Text>
           <View style={styles.versionBadge}>

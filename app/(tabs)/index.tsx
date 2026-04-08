@@ -84,7 +84,7 @@ function makeStyles(c: AppColors) {
     commissionRow: { flexDirection: "row", padding: 16 },
     commissionItem: { flex: 1, alignItems: "center", gap: 6 },
     commissionDivider: { width: 1, backgroundColor: c.cardBorder, marginVertical: 2 },
-    commissionLabel: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center" },
+    commissionLabel: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular", textAlign: "center", alignSelf: "stretch", flexShrink: 1 },
     commissionValue: { fontSize: 18, fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
     unconfigured: { flex: 1, backgroundColor: c.background, alignItems: "center", justifyContent: "center", paddingHorizontal: 40, gap: 16 },
     unconfiguredTitle: { fontSize: 22, color: c.text, fontFamily: "Inter_700Bold" },
@@ -318,7 +318,7 @@ export default function DashboardScreen() {
 
         <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.orderStatus")}</Text>
         <View style={styles.statsGrid}>
-          <StatCard label={t("stat.paidPending")} value={data.paid.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
+          <StatCard label={t("stat.paidPending")} value={data.paid.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"} isRTL={isRTL} badge={t("stat.all")} />
           <StatCard label={t("stat.paidPendingThisMonth")} value={data.paidThisMonth.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} badge={t("stat.thisMonth")} />
           <StatCard label={t("stat.receivedThisMonth")} value={data.receivedThisMonth.count} color={colors.success} subLabel={t("stat.estCommission")} subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
           <StatCard label={t("stat.receivedLastMonth")} value={data.receivedLastMonth.count} color={colors.primary} subLabel={t("stat.estCommission")} subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
