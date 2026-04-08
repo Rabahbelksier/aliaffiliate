@@ -10,10 +10,24 @@ Mobile app to track AliExpress Affiliate orders, view commissions, and analyze p
 
 - **Frontend**: Expo React Native with Expo Router (file-based routing)
 - **Backend**: Express.js deployed on Render at `https://aliaffiliate.onrender.com` — proxies AliExpress Affiliate API with MD5 signature generation
+- **Database**: PostgreSQL (Supabase) via `pg` + Drizzle ORM. `DATABASE_URL` secret is required.
 - **State**: AsyncStorage for offline caching + React Query for data fetching
 - **Navigation**: Bottom tabs (Dashboard, Orders, Settled, Canceled, Settings)
 - **API Keys**: Each user provides their own `app_key` and `app_secret` via the Settings screen, stored locally on device via AsyncStorage
 - **i18n**: Bilingual support (Arabic/English) via LanguageContext, default is Arabic, switchable in Settings
+
+## AffiliateModal (Popup Notification)
+
+- **Component**: `components/AffiliateModal.tsx` — renders globally in `app/_layout.tsx`
+- **Data source**: `aliaffiliate` table in the database (fetched via `/api/affiliate-config` on every app launch)
+- **Table**: auto-created on server start if it doesn't exist (`server/routes.ts → ensureAliAffiliateTable`)
+- **Columns**: `text_ar`, `text_en`, `btn_ar`, `btn_en`, `link`, `version`, `baner`
+- **Show logic**:
+  - If `app_version < db.version` → modal shown, no close button (mandatory)
+  - If `baner === 'on'` → modal shown with X close button
+  - Otherwise → modal not shown
+- **Language**: text and button label switch between Arabic/English based on app language setting
+- **Button**: hidden if both `btn_ar` and `btn_en` are empty; opens `link` in browser on press
 
 ## API Integration — Key Findings
 

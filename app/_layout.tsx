@@ -12,6 +12,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AffiliateModal } from "@/components/AffiliateModal";
 import { queryClient } from "@/lib/query-client";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { LanguageProvider } from "@/context/LanguageContext";
@@ -28,6 +29,7 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerBackTitle: "Back", contentStyle: { backgroundColor: colors.background } }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
+      <AffiliateModal />
     </>
   );
 }

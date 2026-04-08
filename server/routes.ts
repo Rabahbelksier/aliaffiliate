@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import * as crypto from "crypto";
 import * as https from "https";
 import { URL } from "url";
+import { pool } from "./db";
 
 const ALIEXPRESS_API_URL = "https://api-sg.aliexpress.com/sync";
 const MAX_PAGE_SIZE = 50;
@@ -235,9 +236,43 @@ async function fetchReceivedByMonth(
   };
 }
 
+async function ensureAliAffiliateTable(): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS aliaffiliate (
+        text_ar  TEXT NOT NULL DEFAULT '',
+        text_en  TEXT NOT NULL DEFAULT '',
+        btn_ar   TEXT NOT NULL DEFAULT '',
+        btn_en   TEXT NOT NULL DEFAULT '',
+        link     TEXT NOT NULL DEFAULT '',
+        version  TEXT NOT NULL DEFAULT '0.0.0',
+        baner    TEXT NOT NULL DEFAULT 'off'
+      )
+    `);
+    console.log("aliaffiliate table ready");
+  } catch (err) {
+    console.error("Failed to ensure aliaffiliate table:", err);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  await ensureAliAffiliateTable();
+
   app.get("/api/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  app.get("/api/affiliate-config", async (_req: Request, res: Response) => {
+    try {
+      const result = await pool.query("SELECT * FROM aliaffiliate LIMIT 1");
+      if (result.rows.length === 0) {
+        return res.json(null);
+      }
+      return res.json(result.rows[0]);
+    } catch (err) {
+      console.error("affiliate-config error:", err);
+      return res.status(500).json({ error: "Failed to fetch affiliate config" });
+    }
   });
 
   app.post("/api/orders", async (req: Request, res: Response) => {
