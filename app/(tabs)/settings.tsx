@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage, translateApiError, type Language } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -50,9 +51,11 @@ function makeStyles(c: AppColors) {
     infoCard: { backgroundColor: c.card, borderRadius: 12, borderWidth: 1, borderColor: c.cardBorder, padding: 14, marginBottom: 16 },
     infoRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
     infoText: { flex: 1, fontSize: 12, color: c.textMuted, fontFamily: "Inter_400Regular", lineHeight: 18 },
-    aboutRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    aboutLabel: { fontSize: 14, color: c.textSecondary, fontFamily: "Inter_400Regular" },
-    aboutValue: { fontSize: 14, color: c.text, fontFamily: "Inter_500Medium" },
+    linkRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
+    linkRowLast: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14 },
+    linkIcon: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center", marginRight: 12 },
+    linkLabel: { flex: 1, fontSize: 15, color: c.text, fontFamily: "Inter_500Medium" },
+    linkLabelRTL: { flex: 1, fontSize: 15, color: c.text, fontFamily: "Inter_500Medium", textAlign: "right", marginRight: 0, marginLeft: 12 },
   });
 }
 
@@ -295,20 +298,31 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
           <Feather name="info" size={16} color={colors.info} />
-          <Text style={styles.sectionTitle}>{t("settings.about")}</Text>
+          <Text style={styles.sectionTitle}>{t("settings.legalSection")}</Text>
         </View>
-        <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <Text style={styles.aboutLabel}>{t("settings.app")}</Text>
-          <Text style={styles.aboutValue}>AliAffiliate</Text>
-        </View>
-        <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <Text style={styles.aboutLabel}>{t("settings.version")}</Text>
-          <Text style={styles.aboutValue}>1.0.0</Text>
-        </View>
-        <View style={[styles.aboutRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <Text style={styles.aboutLabel}>{t("settings.api")}</Text>
-          <Text style={styles.aboutValue}>AliExpress Affiliate v2.0</Text>
-        </View>
+
+        {[
+          { route: "/about", icon: "info", color: colors.info, bg: colors.info + "20", label: t("legal.about") },
+          { route: "/privacy", icon: "shield", color: colors.success, bg: colors.success + "20", label: t("legal.privacy") },
+          { route: "/terms", icon: "file-text", color: colors.primary, bg: colors.primary + "20", label: t("legal.terms") },
+          { route: "/disclaimer", icon: "alert-triangle", color: colors.warning, bg: colors.warning + "20", label: t("legal.disclaimer"), last: true },
+        ].map(({ route, icon, color, bg, label, last }) => (
+          <Pressable
+            key={route}
+            style={({ pressed }) => [
+              last ? styles.linkRowLast : styles.linkRow,
+              isRTL && { flexDirection: "row-reverse" },
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+            onPress={() => router.push(route as any)}
+          >
+            <View style={[styles.linkIcon, { backgroundColor: bg, marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }]}>
+              <Feather name={icon as any} size={16} color={color} />
+            </View>
+            <Text style={[styles.linkLabel, { textAlign }]}>{label}</Text>
+            <Feather name={isRTL ? "chevron-left" : "chevron-right"} size={16} color={colors.textMuted} />
+          </Pressable>
+        ))}
       </View>
     </ScrollView>
   );

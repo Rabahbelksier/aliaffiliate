@@ -107,6 +107,24 @@ const en: Translations = {
   "common.error": "Error",
   "common.back": "Back",
 
+  "legal.disclaimer": "Disclaimer",
+  "legal.terms": "Terms of Service",
+  "legal.privacy": "Privacy Policy",
+  "legal.about": "About AliAffiliate",
+  "legal.lastUpdated": "Effective: April 2025",
+  "legal.footerNote": "This document is subject to change. Please review periodically.",
+
+  "about.tagline": "Your AliExpress Affiliate tracking & link generation companion",
+  "about.versionLabel": "Version",
+  "about.whatIsIt": "What is AliAffiliate?",
+  "about.description": "AliAffiliate is a powerful mobile tool built for AliExpress Affiliate Program members. It connects directly to your AliExpress Affiliate account using your personal API credentials, giving you a clean, real-time view of your earnings and orders — right from your phone.\n\nDesigned with simplicity and privacy in mind, the app keeps your credentials securely on your device and gives you the tools you need to manage your affiliate business efficiently.",
+  "about.features": "Key Features",
+  "about.appInfo": "App Information",
+  "about.platform": "Platform",
+  "about.madeWith": "Built with care for AliExpress Affiliate Program members · Not affiliated with AliExpress or Alibaba Group",
+
+  "settings.legalSection": "Legal & Info",
+
   "apiError.signatureInvalid": "The request signature does not comply with the platform’s standards, or there is an error in the application’s secret key",
   "apiError.appKeyInvalid": "The specified App Key is invalid",
   "apiError.unexpectedFormat": "Unexpected API response format",
@@ -237,6 +255,24 @@ const ar: Translations = {
 
   "common.error": "خطأ",
   "common.back": "رجوع",
+
+  "legal.disclaimer": "إخلاء المسؤولية",
+  "legal.terms": "شروط الخدمة",
+  "legal.privacy": "سياسة الخصوصية",
+  "legal.about": "حول AliAffiliate",
+  "legal.lastUpdated": "ساري من: أبريل 2025",
+  "legal.footerNote": "هذه الوثيقة قابلة للتغيير. يُرجى مراجعتها بصفة دورية.",
+
+  "about.tagline": "رفيقك في متابعة أرباح الأفلييت وإنشاء الروابط في AliExpress",
+  "about.versionLabel": "الإصدار",
+  "about.whatIsIt": "ما هو AliAffiliate؟",
+  "about.description": "AliAffiliate هو تطبيق جوّال قوي مصمَّم لأعضاء برنامج الأفلييت في AliExpress. يتصل مباشرةً بحسابك في AliExpress Affiliate باستخدام بيانات اعتمادك الشخصية، مما يمنحك عرضاً نظيفاً ومباشراً لأرباحك وطلباتك — من هاتفك مباشرةً.\n\nمُصمَّم مع مراعاة البساطة والخصوصية، يحافظ التطبيق على بيانات اعتمادك بشكل آمن على جهازك ويمنحك الأدوات اللازمة لإدارة أعمالك في الأفلييت بكفاءة.",
+  "about.features": "المميزات الرئيسية",
+  "about.appInfo": "معلومات التطبيق",
+  "about.platform": "المنصة",
+  "about.madeWith": "مصنوع باعتناء لأعضاء برنامج الأفلييت في AliExpress · غير مرتبط بـ AliExpress أو مجموعة Alibaba",
+
+  "settings.legalSection": "القانونية والمعلومات",
 
   "apiError.signatureInvalid": "توقيع الطلب لا يتوافق مع معايير المنصة أو هنالك خطأ في مفتاح سر التطبيق",
   "apiError.appKeyInvalid": "مفتاح التطبيق المحدد غير صالح",
