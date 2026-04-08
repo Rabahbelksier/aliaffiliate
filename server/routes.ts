@@ -342,13 +342,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const now = new Date();
-      const sixMonthsAgo = new Date(now.getTime() - 180 * 24 * 3600 * 1000);
+      const sixMonthsAgo = new Date(now.getTime() - 179 * 24 * 3600 * 1000);
       const statuses = ["Payment Completed", "Income Settled", "Buyer Confirmed Receipt"];
       const allIds = new Set<string>();
 
       for (const status of statuses) {
         try {
-          const page = await fetchOnePage({
+          const baseParams: ApiCallParams = {
             app_key,
             app_secret,
             start_time: formatDate(sixMonthsAgo),
@@ -356,11 +356,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             time_type: "1",
             status,
             page_no: "1",
-            page_size: "50",
-          });
-          for (const order of page.orders) {
+            page_size: String(MAX_PAGE_SIZE),
+          };
+
+          const firstPage = await fetchOnePage(baseParams);
+          for (const order of firstPage.orders) {
             if (order.tracking_id && order.tracking_id.trim()) {
               allIds.add(order.tracking_id.trim());
+            }
+          }
+
+          const totalPages = Math.ceil(firstPage.total_record_count / MAX_PAGE_SIZE);
+          for (let page = 2; page <= Math.min(totalPages, MAX_PAGES); page++) {
+            const pageResult = await fetchOnePage({ ...baseParams, page_no: String(page) });
+            if (pageResult.error) break;
+            for (const order of pageResult.orders) {
+              if (order.tracking_id && order.tracking_id.trim()) {
+                allIds.add(order.tracking_id.trim());
+              }
             }
           }
         } catch {}
