@@ -9,7 +9,7 @@ Mobile app to track AliExpress Affiliate orders, view commissions, and analyze p
 ## Architecture
 
 - **Frontend**: Expo React Native with Expo Router (file-based routing)
-- **Backend**: Express.js deployed on Render at `https://aliaffiliate.onrender.com` — proxies AliExpress Affiliate API with MD5 signature generation
+- **Backend**: Express.js deployed on Render at `https://aliaffiliate-dz.onrender.com` — proxies AliExpress Affiliate API with MD5 signature generation
 - **Database**: PostgreSQL (Supabase) via `pg` + Drizzle ORM. `DATABASE_URL` secret is required.
 - **State**: AsyncStorage for offline caching + React Query for data fetching
 - **Navigation**: Bottom tabs (Dashboard, Orders, Settled, Canceled, Settings)
@@ -105,13 +105,13 @@ lib/
 
 - `lib/query-client.ts` resolves the API URL dynamically:
   - If `EXPO_PUBLIC_DOMAIN` env var is set, uses `https://${EXPO_PUBLIC_DOMAIN}`
-  - Otherwise falls back to `https://aliaffiliate.onrender.com`
+  - Otherwise falls back to `https://aliaffiliate-dz.onrender.com`
 - The Start Frontend workflow sets `EXPO_PUBLIC_DOMAIN=aliaffiliate.onrender.com` so both web preview and Expo Go use Render
 - CORS on the server allows any origin (the API is secured by per-request app_key/app_secret)
 
 ## Server Deployment (Render)
 
-- Backend is deployed on Render at `https://aliaffiliate.onrender.com`
+- Backend is deployed on Render at `https://aliaffiliate-dz.onrender.com`
 - Build command: `npm install && npm run server:build`
 - Start command: `npm run server:prod`
 - After code changes, redeploy to Render for changes to take effect on production
