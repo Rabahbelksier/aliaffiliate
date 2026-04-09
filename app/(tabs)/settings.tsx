@@ -88,6 +88,7 @@ export default function SettingsScreen() {
   const [langExpanded, setLangExpanded] = useState(false);
   const [appearanceExpanded, setAppearanceExpanded] = useState(false);
   const [apiExpanded, setApiExpanded] = useState(false);
+  const [legalExpanded, setLegalExpanded] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -357,12 +358,25 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.sectionHeader,
+            legalExpanded && styles.sectionHeaderExpanded,
+            isRTL && { flexDirection: "row-reverse" },
+            { opacity: pressed ? 0.75 : 1 },
+          ]}
+          onPress={() => setLegalExpanded((v) => !v)}
+        >
           <Feather name="info" size={16} color={colors.info} />
           <Text style={styles.sectionTitle}>{t("settings.legalSection")}</Text>
-        </View>
+          <Feather
+            name={legalExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.textMuted}
+          />
+        </Pressable>
 
-        {[
+        {legalExpanded && [
           { route: "/about", icon: "info", color: colors.info, bg: colors.info + "20", label: t("legal.about") },
           { route: "/privacy", icon: "shield", color: colors.success, bg: colors.success + "20", label: t("legal.privacy") },
           { route: "/terms", icon: "file-text", color: colors.primary, bg: colors.primary + "20", label: t("legal.terms") },
