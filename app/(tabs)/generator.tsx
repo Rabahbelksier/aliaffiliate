@@ -21,8 +21,8 @@ import { getApiUrl } from "@/lib/query-client";
 import { fetch as nativeFetch } from "expo/fetch";
 import type { AppColors } from "@/constants/colors";
 
-const TRACKING_IDS_KEY = "@aliaffiliate_tracking_ids";
-const SELECTED_ID_KEY = "@aliaffiliate_selected_tracking_id";
+const TRACKING_IDS_KEY_PREFIX = "@aliaffiliate_tracking_ids_v2_";
+const SELECTED_ID_KEY_PREFIX = "@aliaffiliate_selected_tracking_id_v2_";
 const DEFAULT_TRACKING_ID = "default";
 
 interface GeneratedLink {
@@ -118,13 +118,16 @@ export default function GeneratorScreen() {
     return ids[0];
   }, []);
 
+  const trackingIdsKey = `${TRACKING_IDS_KEY_PREFIX}${settings.app_key}`;
+  const selectedIdKey = `${SELECTED_ID_KEY_PREFIX}${settings.app_key}`;
+
   useEffect(() => {
     if (!isConfigured) return;
     (async () => {
       try {
         const [cachedIdsRaw, cachedSelectedId] = await Promise.all([
-          AsyncStorage.getItem(TRACKING_IDS_KEY),
-          AsyncStorage.getItem(SELECTED_ID_KEY),
+          AsyncStorage.getItem(trackingIdsKey),
+          AsyncStorage.getItem(selectedIdKey),
         ]);
         if (cachedIdsRaw) {
           const ids: string[] = JSON.parse(cachedIdsRaw);
@@ -138,7 +141,7 @@ export default function GeneratorScreen() {
         await fetchTrackingIds();
       }
     })();
-  }, [isConfigured]);
+  }, [isConfigured, settings.app_key]);
 
   const fetchTrackingIds = useCallback(async () => {
     if (!isConfigured) return;
@@ -156,10 +159,11 @@ export default function GeneratorScreen() {
       const data: { tracking_ids: string[] } = await res.json();
       const ids = data.tracking_ids || [];
       setTrackingIds(ids);
-      await AsyncStorage.setItem(TRACKING_IDS_KEY, JSON.stringify(ids));
+      const key = `${TRACKING_IDS_KEY_PREFIX}${settings.app_key}`;
+      await AsyncStorage.setItem(key, JSON.stringify(ids));
       const picked = pickDefaultId(ids, selectedId);
       setSelectedId(picked);
-      if (picked) await AsyncStorage.setItem(SELECTED_ID_KEY, picked);
+      if (picked) await AsyncStorage.setItem(`${SELECTED_ID_KEY_PREFIX}${settings.app_key}`, picked);
     } catch {
       setIdsError(t("generator.errorLoadingIds"));
     } finally {
@@ -170,8 +174,8 @@ export default function GeneratorScreen() {
   const handleSelectId = useCallback(async (id: string) => {
     setSelectedId(id);
     setDropdownOpen(false);
-    await AsyncStorage.setItem(SELECTED_ID_KEY, id);
-  }, []);
+    await AsyncStorage.setItem(`${SELECTED_ID_KEY_PREFIX}${settings.app_key}`, id);
+  }, [settings.app_key]);
 
   const extractAliExpressUrl = (text: string): string | null => {
     const urlPattern = /https?:\/\/\S+/gi;

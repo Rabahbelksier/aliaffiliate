@@ -20,14 +20,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "list.bullet.rectangle", selected: "list.bullet.rectangle.fill" }} />
         <Label>{t("tab.orders")}</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settled">
-        <Icon sf={{ default: "checkmark.seal", selected: "checkmark.seal.fill" }} />
-        <Label>{t("tab.settled")}</Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="canceled">
-        <Icon sf={{ default: "xmark.circle", selected: "xmark.circle.fill" }} />
-        <Label>{t("tab.canceled")}</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="generator">
         <Icon sf={{ default: "link.badge.plus", selected: "link.badge.plus" }} />
         <Label>{t("tab.generator")}</Label>
@@ -89,19 +81,13 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="settled"
         options={{
-          title: t("tab.settled"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkmark-circle" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
         name="canceled"
         options={{
-          title: t("tab.canceled"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="close-circle" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen

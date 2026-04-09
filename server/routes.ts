@@ -8,6 +8,7 @@ import { pool } from "./db";
 const ALIEXPRESS_API_URL = "https://api-sg.aliexpress.com/sync";
 const MAX_PAGE_SIZE = 50;
 const MAX_PAGES = 8; // up to 400 orders per fetch
+const TRACKING_ID_PAGE_SIZE = 50;
 
 function generateSign(params: Record<string, string>, appSecret: string): string {
   const sortedKeys = Object.keys(params).sort();
@@ -236,6 +237,143 @@ async function fetchReceivedByMonth(
   };
 }
 
+/**
+ * Fetch all tracking IDs from the AliExpress affiliate account using the dedicated API.
+ * Falls back to extracting from orders if the dedicated API fails.
+ */
+async function fetchAllTrackingIds(app_key: string, app_secret: string): Promise<string[]> {
+  const allIds = new Set<string>();
+
+  // Try the dedicated tracking ID API first
+  try {
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const timestamp = String(Date.now());
+      const reqParams: Record<string, string> = {
+        app_key,
+        timestamp,
+        sign_method: "md5",
+        v: "2.0",
+        method: "aliexpress.affiliate.trackingid.get",
+        page_no: String(page),
+        page_size: String(TRACKING_ID_PAGE_SIZE),
+      };
+      reqParams.sign = generateSign(reqParams, app_secret);
+
+      const postData = Object.entries(reqParams)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&");
+
+      const responseText = await httpPost(postData);
+      const responseJson = JSON.parse(responseText);
+
+      console.log(`Tracking IDs API page ${page} response:`, JSON.stringify(responseJson).slice(0, 500));
+
+      const trackingResult = responseJson?.aliexpress_affiliate_trackingid_get_response;
+
+      if (!trackingResult) {
+        // Dedicated API not available, fall back to order extraction
+        console.log("Dedicated tracking ID API not available, falling back to order extraction");
+        hasMore = false;
+        break;
+      }
+
+      const respResult = trackingResult.resp_result;
+
+      if (!respResult || (respResult.resp_code !== 200 && respResult.resp_code !== 0)) {
+        console.log(`Tracking ID API error: ${respResult?.resp_msg || respResult?.resp_code}`);
+        hasMore = false;
+        break;
+      }
+
+      const result = respResult.result;
+      const totalNum = Number(result?.total_num || 0);
+
+      // Extract tracking IDs from the result — handle both array and wrapped formats
+      let ids: string[] = [];
+      const trackingIdList = result?.trackingid_list;
+      if (Array.isArray(trackingIdList)) {
+        ids = trackingIdList.filter(Boolean);
+      } else if (trackingIdList?.string) {
+        const raw = trackingIdList.string;
+        ids = Array.isArray(raw) ? raw.filter(Boolean) : [raw].filter(Boolean);
+      } else if (result?.tracking_id_list) {
+        const raw = result.tracking_id_list;
+        ids = Array.isArray(raw) ? raw.filter(Boolean) : [raw].filter(Boolean);
+      }
+
+      for (const id of ids) {
+        if (id && id.trim()) allIds.add(id.trim());
+      }
+
+      console.log(`Tracking IDs API page ${page}: found ${ids.length} IDs, total=${totalNum}`);
+
+      // Check if there are more pages
+      if (allIds.size >= totalNum || ids.length < TRACKING_ID_PAGE_SIZE) {
+        hasMore = false;
+      } else {
+        page++;
+      }
+    }
+  } catch (err) {
+    console.log("Tracking IDs dedicated API error:", err);
+  }
+
+  // If dedicated API returned results, use them
+  if (allIds.size > 0) {
+    return Array.from(allIds);
+  }
+
+  // Fallback: extract tracking IDs from recent orders across all statuses
+  console.log("Falling back to order-based tracking ID extraction");
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getTime() - 179 * 24 * 3600 * 1000);
+  const statuses = [
+    "Payment Completed",
+    "Income Settled",
+    "Buyer Confirmed Receipt",
+    "Invalid",
+    "Completed Settlement",
+  ];
+
+  for (const status of statuses) {
+    try {
+      const baseParams: ApiCallParams = {
+        app_key,
+        app_secret,
+        start_time: formatDate(sixMonthsAgo),
+        end_time: formatDate(now),
+        time_type: "1",
+        status,
+        page_no: "1",
+        page_size: String(MAX_PAGE_SIZE),
+      };
+
+      const firstPage = await fetchOnePage(baseParams);
+      for (const order of firstPage.orders) {
+        if (order.tracking_id && order.tracking_id.trim()) {
+          allIds.add(order.tracking_id.trim());
+        }
+      }
+
+      const totalPages = Math.ceil(firstPage.total_record_count / MAX_PAGE_SIZE);
+      for (let page = 2; page <= Math.min(totalPages, MAX_PAGES); page++) {
+        const pageResult = await fetchOnePage({ ...baseParams, page_no: String(page) });
+        if (pageResult.error) break;
+        for (const order of pageResult.orders) {
+          if (order.tracking_id && order.tracking_id.trim()) {
+            allIds.add(order.tracking_id.trim());
+          }
+        }
+      }
+    } catch {}
+  }
+
+  return Array.from(allIds);
+}
+
 async function ensureAliAffiliateTable(): Promise<void> {
   try {
     await pool.query(`
@@ -341,45 +479,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "app_key and app_secret are required" });
       }
 
-      const now = new Date();
-      const sixMonthsAgo = new Date(now.getTime() - 179 * 24 * 3600 * 1000);
-      const statuses = ["Payment Completed", "Income Settled", "Buyer Confirmed Receipt"];
-      const allIds = new Set<string>();
-
-      for (const status of statuses) {
-        try {
-          const baseParams: ApiCallParams = {
-            app_key,
-            app_secret,
-            start_time: formatDate(sixMonthsAgo),
-            end_time: formatDate(now),
-            time_type: "1",
-            status,
-            page_no: "1",
-            page_size: String(MAX_PAGE_SIZE),
-          };
-
-          const firstPage = await fetchOnePage(baseParams);
-          for (const order of firstPage.orders) {
-            if (order.tracking_id && order.tracking_id.trim()) {
-              allIds.add(order.tracking_id.trim());
-            }
-          }
-
-          const totalPages = Math.ceil(firstPage.total_record_count / MAX_PAGE_SIZE);
-          for (let page = 2; page <= Math.min(totalPages, MAX_PAGES); page++) {
-            const pageResult = await fetchOnePage({ ...baseParams, page_no: String(page) });
-            if (pageResult.error) break;
-            for (const order of pageResult.orders) {
-              if (order.tracking_id && order.tracking_id.trim()) {
-                allIds.add(order.tracking_id.trim());
-              }
-            }
-          }
-        } catch {}
-      }
-
-      return res.json({ tracking_ids: Array.from(allIds) });
+      const tracking_ids = await fetchAllTrackingIds(app_key, app_secret);
+      return res.json({ tracking_ids });
     } catch (error) {
       console.error("Tracking IDs API error:", error);
       res.status(500).json({ error: String(error) });

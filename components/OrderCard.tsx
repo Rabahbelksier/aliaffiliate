@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, Linking } from "react-native";
+import { View, Text, StyleSheet, Pressable, Linking, Alert } from "react-native";
 import { Image } from "expo-image";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
 import type { AliOrder } from "@/hooks/useOrders";
@@ -71,6 +72,8 @@ function makeStyles(c: AppColors) {
     title: { fontSize: 13, color: c.text, fontFamily: "Inter_500Medium", lineHeight: 18 },
     metaRow: { flexDirection: "row", alignItems: "center", gap: 4 },
     meta: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular" },
+    orderIdRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+    orderIdText: { fontSize: 11, color: c.textMuted, fontFamily: "Inter_400Regular", flex: 1 },
     divider: { height: 1, backgroundColor: c.cardBorder, marginHorizontal: 14 },
     financialRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, gap: 4 },
     finItem: { flex: 1, alignItems: "center", gap: 2 },
@@ -93,6 +96,14 @@ export function OrderCard({ order }: OrderCardProps) {
     if (order.product_detail_url) {
       Linking.openURL(order.product_detail_url);
     }
+  };
+
+  const handleCopyOrderId = async () => {
+    if (!order.order_id) return;
+    try {
+      await Clipboard.setStringAsync(order.order_id);
+      Alert.alert("", t("orderCard.orderIdCopied"));
+    } catch {}
   };
 
   return (
@@ -129,6 +140,23 @@ export function OrderCard({ order }: OrderCardProps) {
           <Text style={[styles.title, { textAlign: isRTL ? "right" : "left" }]} numberOfLines={2}>
             {order.product_title || `Order #${order.order_id}`}
           </Text>
+
+          {order.order_id && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.orderIdRow,
+                isRTL && { flexDirection: "row-reverse" },
+                { opacity: pressed ? 0.6 : 1 },
+              ]}
+              onPress={handleCopyOrderId}
+            >
+              <MaterialCommunityIcons name="pound" size={11} color={colors.primary} />
+              <Text style={[styles.orderIdText, { color: colors.primary }]} numberOfLines={1}>
+                {order.order_id}
+              </Text>
+              <Feather name="copy" size={10} color={colors.primary} />
+            </Pressable>
+          )}
 
           <View style={[styles.metaRow, isRTL && { flexDirection: "row-reverse" }]}>
             <Feather name="calendar" size={11} color={colors.textMuted} />

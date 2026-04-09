@@ -39,8 +39,8 @@ const en: Translations = {
   "stat.commission": "Lost Commission",
 
   "commission.paidOrders": "Awaiting processing",
-  "commission.thisMonth": "Paid next month (may increase)",
-  "commission.lastMonth": "Paid this month",
+  "commission.thisMonth": "Received This Month",
+  "commission.lastMonth": "Received Last Month",
 
   "settled.title": "Settled",
   "settled.badge": "Completed",
@@ -54,6 +54,8 @@ const en: Translations = {
 
   "orders.title": "Orders",
   "orders.badge": "Pending Delivery",
+  "orders.tabSettled": "Settled",
+  "orders.tabCanceled": "Canceled",
   "orders.empty": "No paid orders in the last 5 months.",
   "orders.setupText": "Enter your API credentials in Settings to view orders.",
 
@@ -65,6 +67,7 @@ const en: Translations = {
   "orderCard.payment": "Payment",
   "orderCard.rate": "Rate",
   "orderCard.commission": "Commission",
+  "orderCard.orderIdCopied": "Order ID copied",
 
   "ordersList.connectionError": "Connection Error",
   "ordersList.apiResponse": "API Response",
@@ -126,7 +129,7 @@ const en: Translations = {
 
   "settings.legalSection": "Legal & Info",
 
-  "apiError.signatureInvalid": "The request signature does not comply with the platform’s standards, or there is an error in the application’s secret key",
+  "apiError.signatureInvalid": "The request signature does not comply with the platform's standards, or there is an error in the application's secret key",
   "apiError.appKeyInvalid": "The specified App Key is invalid",
   "apiError.unexpectedFormat": "Unexpected API response format",
   "apiError.appKeySecretRequired": "App Key and App Secret are required",
@@ -141,7 +144,7 @@ const en: Translations = {
   "generator.trackingId": "Tracking ID",
   "generator.loadingIds": "Loading tracking IDs…",
   "generator.errorLoadingIds": "Could not load tracking IDs. Check your credentials.",
-  "generator.noIds": "No tracking IDs found in your recent orders.",
+  "generator.noIds": "No tracking IDs found in your account.",
   "generator.noIdSelected": "None selected",
   "generator.generateBtn": "Generate Affiliate Link",
   "generator.resultTitle": "Your Affiliate Link",
@@ -189,8 +192,8 @@ const ar: Translations = {
   "stat.commission": "العمولة الضائعة",
 
   "commission.paidOrders": "في انتظار المعالجة",
-  "commission.thisMonth": "تدفع الشهر القادم (قد تزيد)",
-  "commission.lastMonth": "تدفع هذا الشهر",
+  "commission.thisMonth": "مستلم هذا الشهر",
+  "commission.lastMonth": "مستلم الشهر الماضي",
 
   "settled.title": "المسوّاة",
   "settled.badge": "مكتملة",
@@ -204,6 +207,8 @@ const ar: Translations = {
 
   "orders.title": "الطلبات",
   "orders.badge": "بانتظار التسليم",
+  "orders.tabSettled": "المسوّاة",
+  "orders.tabCanceled": "الملغاة",
   "orders.empty": "لا توجد طلبات مدفوعة في آخر 5 أشهر.",
   "orders.setupText": "أدخل بيانات API في الإعدادات لعرض الطلبات.",
 
@@ -215,6 +220,7 @@ const ar: Translations = {
   "orderCard.payment": "المبلغ",
   "orderCard.rate": "النسبة",
   "orderCard.commission": "العمولة",
+  "orderCard.orderIdCopied": "تم نسخ رقم الطلب",
 
   "ordersList.connectionError": "خطأ في الاتصال",
   "ordersList.apiResponse": "استجابة API",
@@ -291,7 +297,7 @@ const ar: Translations = {
   "generator.trackingId": "معرّف التتبع",
   "generator.loadingIds": "جارٍ تحميل معرّفات التتبع…",
   "generator.errorLoadingIds": "تعذّر تحميل معرّفات التتبع. تحقق من بيانات الاعتماد.",
-  "generator.noIds": "لم يُعثر على معرّفات تتبع في طلباتك الأخيرة.",
+  "generator.noIds": "لم يُعثر على معرّفات تتبع في حسابك.",
   "generator.noIdSelected": "لم يتم الاختيار",
   "generator.generateBtn": "إنشاء رابط الأفلييت",
   "generator.resultTitle": "رابط الأفلييت الخاص بك",

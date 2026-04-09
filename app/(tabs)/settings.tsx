@@ -28,8 +28,18 @@ function makeStyles(c: AppColors) {
     title: { fontSize: 28, color: c.text, fontFamily: "Inter_700Bold", letterSpacing: -0.5, marginBottom: 6 },
     subtitle: { fontSize: 13, color: c.textMuted, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 24 },
     section: { backgroundColor: c.card, borderRadius: 16, borderWidth: 1, borderColor: c.cardBorder, marginBottom: 16, overflow: "hidden" },
-    sectionHeader: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: c.cardBorder },
-    sectionTitle: { fontSize: 13, color: c.textSecondary, fontFamily: "Inter_600SemiBold", letterSpacing: 0.5, textTransform: "uppercase" },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    sectionHeaderExpanded: {
+      borderBottomWidth: 1,
+      borderBottomColor: c.cardBorder,
+    },
+    sectionTitle: { flex: 1, fontSize: 13, color: c.textSecondary, fontFamily: "Inter_600SemiBold", letterSpacing: 0.5, textTransform: "uppercase" },
     langRow: { flexDirection: "row", padding: 12, gap: 10 },
     toggleRow: { flexDirection: "row", padding: 12, gap: 10 },
     toggleBtn: { flex: 1, alignItems: "center", paddingVertical: 12, borderRadius: 10, backgroundColor: c.surface, borderWidth: 1, borderColor: c.cardBorder },
@@ -74,6 +84,10 @@ export default function SettingsScreen() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [saved, setSaved] = useState(false);
+
+  const [langExpanded, setLangExpanded] = useState(false);
+  const [appearanceExpanded, setAppearanceExpanded] = useState(false);
+  const [apiExpanded, setApiExpanded] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -138,101 +152,148 @@ export default function SettingsScreen() {
       <Text style={[styles.title, { textAlign }]}>{t("settings.title")}</Text>
       <Text style={[styles.subtitle, { textAlign }]}>{t("settings.subtitle")}</Text>
 
-      {/* Language */}
+      {/* Language — Collapsible */}
       <View style={styles.section}>
-        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.sectionHeader,
+            langExpanded && styles.sectionHeaderExpanded,
+            isRTL && { flexDirection: "row-reverse" },
+            { opacity: pressed ? 0.75 : 1 },
+          ]}
+          onPress={() => setLangExpanded((v) => !v)}
+        >
           <Feather name="globe" size={16} color={colors.primary} />
           <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
-        </View>
-        <View style={[styles.langRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <Pressable
-            style={[styles.toggleBtn, language === "en" && styles.toggleBtnActive]}
-            onPress={() => setLanguage("en" as Language)}
-          >
-            <Text style={[styles.toggleBtnText, language === "en" && styles.toggleBtnTextActive]}>
-              {t("settings.english")}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.toggleBtn, language === "ar" && styles.toggleBtnActive]}
-            onPress={() => setLanguage("ar" as Language)}
-          >
-            <Text style={[styles.toggleBtnText, language === "ar" && styles.toggleBtnTextActive]}>
-              {t("settings.arabic")}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Appearance / Theme */}
-      <View style={styles.section}>
-        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="moon" size={16} color={colors.primary} />
-          <Text style={styles.sectionTitle}>{t("settings.appearance")}</Text>
-        </View>
-        <View style={[styles.toggleRow, isRTL && { flexDirection: "row-reverse" }]}>
-          <Pressable
-            style={[styles.toggleBtn, isDark && styles.toggleBtnActive]}
-            onPress={() => { if (!isDark) toggleTheme(); }}
-          >
-            <Text style={[styles.toggleBtnText, isDark && styles.toggleBtnTextActive]}>
-              {t("settings.themeDark")}
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.toggleBtn, !isDark && styles.toggleBtnActive]}
-            onPress={() => { if (isDark) toggleTheme(); }}
-          >
-            <Text style={[styles.toggleBtnText, !isDark && styles.toggleBtnTextActive]}>
-              {t("settings.themeLight")}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* API Credentials */}
-      <View style={styles.section}>
-        <View style={[styles.sectionHeader, isRTL && { flexDirection: "row-reverse" }]}>
-          <Feather name="key" size={16} color={colors.primary} />
-          <Text style={styles.sectionTitle}>{t("settings.apiCredentials")}</Text>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={[styles.label, { textAlign }]}>{t("settings.appKey")}</Text>
-          <TextInput
-            style={[styles.input, { textAlign }]}
-            value={appKey}
-            onChangeText={setAppKey}
-            placeholder={t("settings.enterAppKey")}
-            placeholderTextColor={colors.textMuted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="next"
+          <Feather
+            name={langExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.textMuted}
           />
-        </View>
-
-        <View style={[styles.field, { borderBottomWidth: 0 }]}>
-          <Text style={[styles.label, { textAlign }]}>{t("settings.appSecret")}</Text>
-          <View style={[styles.inputRow, isRTL && { flexDirection: "row-reverse" }]}>
-            <TextInput
-              style={[styles.input, { flex: 1, textAlign }]}
-              value={appSecret}
-              onChangeText={setAppSecret}
-              placeholder={t("settings.enterAppSecret")}
-              placeholderTextColor={colors.textMuted}
-              autoCapitalize="none"
-              autoCorrect={false}
-              secureTextEntry={!showSecret}
-              returnKeyType="next"
-            />
+        </Pressable>
+        {langExpanded && (
+          <View style={[styles.langRow, isRTL && { flexDirection: "row-reverse" }]}>
             <Pressable
-              style={styles.eyeBtn}
-              onPress={() => setShowSecret(!showSecret)}
+              style={[styles.toggleBtn, language === "en" && styles.toggleBtnActive]}
+              onPress={() => setLanguage("en" as Language)}
             >
-              <Feather name={showSecret ? "eye-off" : "eye"} size={18} color={colors.textMuted} />
+              <Text style={[styles.toggleBtnText, language === "en" && styles.toggleBtnTextActive]}>
+                {t("settings.english")}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.toggleBtn, language === "ar" && styles.toggleBtnActive]}
+              onPress={() => setLanguage("ar" as Language)}
+            >
+              <Text style={[styles.toggleBtnText, language === "ar" && styles.toggleBtnTextActive]}>
+                {t("settings.arabic")}
+              </Text>
             </Pressable>
           </View>
-        </View>
+        )}
+      </View>
+
+      {/* Appearance — Collapsible */}
+      <View style={styles.section}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.sectionHeader,
+            appearanceExpanded && styles.sectionHeaderExpanded,
+            isRTL && { flexDirection: "row-reverse" },
+            { opacity: pressed ? 0.75 : 1 },
+          ]}
+          onPress={() => setAppearanceExpanded((v) => !v)}
+        >
+          <Feather name="moon" size={16} color={colors.primary} />
+          <Text style={styles.sectionTitle}>{t("settings.appearance")}</Text>
+          <Feather
+            name={appearanceExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.textMuted}
+          />
+        </Pressable>
+        {appearanceExpanded && (
+          <View style={[styles.toggleRow, isRTL && { flexDirection: "row-reverse" }]}>
+            <Pressable
+              style={[styles.toggleBtn, isDark && styles.toggleBtnActive]}
+              onPress={() => { if (!isDark) toggleTheme(); }}
+            >
+              <Text style={[styles.toggleBtnText, isDark && styles.toggleBtnTextActive]}>
+                {t("settings.themeDark")}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.toggleBtn, !isDark && styles.toggleBtnActive]}
+              onPress={() => { if (isDark) toggleTheme(); }}
+            >
+              <Text style={[styles.toggleBtnText, !isDark && styles.toggleBtnTextActive]}>
+                {t("settings.themeLight")}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+
+      {/* API Credentials — Collapsible */}
+      <View style={styles.section}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.sectionHeader,
+            apiExpanded && styles.sectionHeaderExpanded,
+            isRTL && { flexDirection: "row-reverse" },
+            { opacity: pressed ? 0.75 : 1 },
+          ]}
+          onPress={() => setApiExpanded((v) => !v)}
+        >
+          <Feather name="key" size={16} color={colors.primary} />
+          <Text style={styles.sectionTitle}>{t("settings.apiCredentials")}</Text>
+          <Feather
+            name={apiExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.textMuted}
+          />
+        </Pressable>
+
+        {apiExpanded && (
+          <>
+            <View style={styles.field}>
+              <Text style={[styles.label, { textAlign }]}>{t("settings.appKey")}</Text>
+              <TextInput
+                style={[styles.input, { textAlign }]}
+                value={appKey}
+                onChangeText={setAppKey}
+                placeholder={t("settings.enterAppKey")}
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
+              />
+            </View>
+
+            <View style={[styles.field, { borderBottomWidth: 0 }]}>
+              <Text style={[styles.label, { textAlign }]}>{t("settings.appSecret")}</Text>
+              <View style={[styles.inputRow, isRTL && { flexDirection: "row-reverse" }]}>
+                <TextInput
+                  style={[styles.input, { flex: 1, textAlign }]}
+                  value={appSecret}
+                  onChangeText={setAppSecret}
+                  placeholder={t("settings.enterAppSecret")}
+                  placeholderTextColor={colors.textMuted}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  secureTextEntry={!showSecret}
+                  returnKeyType="next"
+                />
+                <Pressable
+                  style={styles.eyeBtn}
+                  onPress={() => setShowSecret(!showSecret)}
+                >
+                  <Feather name={showSecret ? "eye-off" : "eye"} size={18} color={colors.textMuted} />
+                </Pressable>
+              </View>
+            </View>
+          </>
+        )}
       </View>
 
       <View style={styles.buttonGroup}>
