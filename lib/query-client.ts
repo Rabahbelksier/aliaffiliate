@@ -2,7 +2,7 @@ import { fetch } from "expo/fetch";
 import { Platform } from "react-native";
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const RENDER_URL = "https://aliaffiliate-dz.onrender.com";
+const RAILWAY_URL = "https://aliaffiliate.up.railway.app";
 
 export function getApiUrl(): string {
   // On web: use the current page origin so API calls go to the local backend via the proxy
@@ -14,7 +14,7 @@ export function getApiUrl(): string {
   if (domain) {
     return `https://${domain}`;
   }
-  return RENDER_URL;
+  return RAILWAY_URL;
 }
 
 async function throwIfResNotOk(res: Response) {
