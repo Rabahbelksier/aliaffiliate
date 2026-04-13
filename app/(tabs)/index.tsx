@@ -337,14 +337,14 @@ export default function DashboardScreen() {
             </View>
             <View style={styles.commissionDivider} />
             <View style={styles.commissionItem}>
-              <Text style={styles.commissionLabel}>{t("commission.thisMonth")}</Text>
+              <Text style={styles.commissionLabel}>{t("commission.summary.thisMonth")}</Text>
               <Text style={[styles.commissionValue, { color: colors.success }]}>
                 {data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
               </Text>
             </View>
             <View style={styles.commissionDivider} />
             <View style={styles.commissionItem}>
-              <Text style={styles.commissionLabel}>{t("commission.lastMonth")}</Text>
+              <Text style={styles.commissionLabel}>{t("commission.summary.lastMonth")}</Text>
               <Text style={[styles.commissionValue, { color: colors.primary }]}>
                 {data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
               </Text>

@@ -41,6 +41,8 @@ const en: Translations = {
   "commission.paidOrders": "Awaiting processing",
   "commission.thisMonth": "Received This Month",
   "commission.lastMonth": "Received Last Month",
+  "commission.summary.thisMonth": "Pay Next Month",
+  "commission.summary.lastMonth": "Pay This Month",
 
   "settled.title": "Settled",
   "settled.badge": "Completed",
@@ -194,6 +196,8 @@ const ar: Translations = {
   "commission.paidOrders": "في انتظار المعالجة",
   "commission.thisMonth": "مستلم هذا الشهر",
   "commission.lastMonth": "مستلم الشهر الماضي",
+  "commission.summary.thisMonth": "تدفع الشهر القادم",
+  "commission.summary.lastMonth": "تدفع هذا الشهر",
 
   "settled.title": "المسوّاة",
   "settled.badge": "مكتملة",
