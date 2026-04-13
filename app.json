@@ -18,6 +18,7 @@
       "bundleIdentifier": "com.AliAffiliate.app"
     },
     "android": {
+      "versionCode": 1,
       "package": "com.AliAffiliate.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0A12",
