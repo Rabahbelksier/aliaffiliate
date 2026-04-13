@@ -34,8 +34,8 @@ function makeStyles(c: AppColors) {
 }
 
 const FEATURES_EN = [
-  { icon: "bar-chart-2", color: "#4A90D9", bg: "#4A90D922", title: "Earnings Dashboard", desc: "Get a real-time overview of your affiliate performance including order counts and estimated commission by status." },
-  { icon: "list", color: "#FF6B35", bg: "#FF6B3522", title: "Order Management", desc: "Browse and filter all your affiliate orders by status — paid & pending, received, settled, and canceled." },
+  { icon: "bar-chart-2", color: "#4A90D9", bg: "#4A90D922", title: "Earnings Dashboard", desc: "Quickly check your account performance through a clear dashboard showing the number of orders and estimated commissions for each status, so you always stay updated on your earnings." },
+  { icon: "list", color: "#FF6B35", bg: "#FF6B3522", title: "Order Management", desc: "Browse all your orders and filter them by status — paid and pending delivery, received, settled, and canceled." },
   { icon: "link", color: "#00D68F", bg: "#00D68F22", title: "Affiliate Link Generator", desc: "Paste any AliExpress product link or text containing one, select your tracking ID, and generate your affiliate promotion link instantly." },
   { icon: "globe", color: "#FFB800", bg: "#FFB80022", title: "Arabic & English Support", desc: "Full bilingual support with proper RTL layout for Arabic, making the app comfortable for users of both languages." },
   { icon: "moon", color: "#8888AA", bg: "#8888AA22", title: "Dark & Light Themes", desc: "Choose the visual style that's most comfortable for you. The theme adapts across all screens consistently." },
@@ -43,8 +43,8 @@ const FEATURES_EN = [
 ];
 
 const FEATURES_AR = [
-  { icon: "bar-chart-2", color: "#4A90D9", bg: "#4A90D922", title: "لوحة الأرباح", desc: "احصل على نظرة عامة فورية على أداء أفلييتك، تشمل عدد الطلبات والعمولة المقدّرة حسب كل حالة." },
-  { icon: "list", color: "#FF6B35", bg: "#FF6B3522", title: "إدارة الطلبات", desc: "تصفّح جميع طلبات الأفلييت وفلترها حسب الحالة — مدفوعة وبانتظار التسليم، مستلمة، مسوّاة، وملغاة." },
+  { icon: "bar-chart-2", color: "#4A90D9", bg: "#4A90D922", title: "لوحة الأرباح", desc: "اطّلع بسرعة على أداء حسابك من خلال لوحة واضحة تعرض عدد الطلبات والعمولات المقدّرة لكل حالة، لتبقى على اطلاع دائم بأرباحك." },
+  { icon: "list", color: "#FF6B35", bg: "#FF6B3522", title: "إدارة الطلبات", desc: "تصفّح جميع طلبات الأفلييت وفلترها حسب الحالة —تصفّح جميع طلباتك وفلترها حسب الحالة — مدفوعة وبانتظار التسليم، مستلمة، مسوّاة، وملغاة." },
   { icon: "link", color: "#00D68F", bg: "#00D68F22", title: "مولّد روابط الأفلييت", desc: "الصق أي رابط منتج AliExpress أو نصاً يحتوي على رابط، اختر معرّف التتبع، واحصل على رابط الترويج فوراً." },
   { icon: "globe", color: "#FFB800", bg: "#FFB80022", title: "دعم العربية والإنجليزية", desc: "دعم كامل للغتين مع تخطيط RTL صحيح للعربية، مما يجعل التطبيق مريحاً لمستخدمي كلتا اللغتين." },
   { icon: "moon", color: "#8888AA", bg: "#8888AA22", title: "وضع داكن وفاتح", desc: "اختر النمط البصري الأكثر راحةً لك. يتكيّف الثيم بشكل متسق عبر جميع الشاشات." },

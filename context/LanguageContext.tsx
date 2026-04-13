@@ -122,8 +122,8 @@ const en: Translations = {
 
   "about.tagline": "Your AliExpress Affiliate tracking & link generation companion",
   "about.versionLabel": "Version",
-  "about.whatIsIt": "What is AliAffiliate?",
-  "about.description": "AliAffiliate is a powerful mobile tool built for AliExpress Affiliate Program members. It connects directly to your AliExpress Affiliate account using your personal API credentials, giving you a clean, real-time view of your earnings and orders — right from your phone.\n\nDesigned with simplicity and privacy in mind, the app keeps your credentials securely on your device and gives you the tools you need to manage your affiliate business efficiently.",
+  "about.whatIsIt": "What is Ali Affiliate?",
+  "about.description": "It is an app designed for AliExpress affiliate marketers, allowing you to easily track your earnings and orders without needing to visit the website every time. \n\n It connects directly to your account to display your data in a clear and organized way, while keeping your information secure and private on your device only. \n\n Simply put, it’s a tool that helps you manage your work quickly and efficiently in one place.",
   "about.features": "Key Features",
   "about.appInfo": "App Information",
   "about.platform": "Platform",
@@ -277,8 +277,8 @@ const ar: Translations = {
 
   "about.tagline": "رفيقك في متابعة أرباح الأفلييت وإنشاء الروابط في AliExpress",
   "about.versionLabel": "الإصدار",
-  "about.whatIsIt": "ما هو AliAffiliate؟",
-  "about.description": "AliAffiliate هو تطبيق جوّال قوي مصمَّم لأعضاء برنامج الأفلييت في AliExpress. يتصل مباشرةً بحسابك في AliExpress Affiliate باستخدام بيانات اعتمادك الشخصية، مما يمنحك عرضاً نظيفاً ومباشراً لأرباحك وطلباتك — من هاتفك مباشرةً.\n\nمُصمَّم مع مراعاة البساطة والخصوصية، يحافظ التطبيق على بيانات اعتمادك بشكل آمن على جهازك ويمنحك الأدوات اللازمة لإدارة أعمالك في الأفلييت بكفاءة.",
+  "about.whatIsIt": "ما هو Ali Affiliate؟",
+  "about.description": "هو تطبيق مخصص هو تطبيق مخصص للمسوقين بالعمولة على علي اكسبراس، يتيح لك متابعة أرباحك وطلباتك بسهولة دون الحاجة للتوجه كل مرة الى الموقع. \n\n يتصل مباشرةً بحسابك ليعرض بياناتك بشكل واضح ومنظم، مع الحفاظ على أمان وخصوصية معلوماتك داخل جهازك فقط. \n\n ببساطة، هو أداة تساعدك على إدارة عملك بسرعة وكفاءة وفي مكان واحد.",
   "about.features": "المميزات الرئيسية",
   "about.appInfo": "معلومات التطبيق",
   "about.platform": "المنصة",
