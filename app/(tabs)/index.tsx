@@ -10,9 +10,11 @@ import {
   Modal,
   Pressable,
   TouchableWithoutFeedback,
+  TouchableOpacity,
+  Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -96,6 +98,8 @@ function makeStyles(c: AppColors) {
     dropdownOptionSelected: { backgroundColor: c.primary + "15" },
     dropdownOptionText: { fontSize: 16, color: c.text, fontFamily: "Inter_400Regular" },
     dropdownOptionTextSelected: { color: c.primary, fontFamily: "Inter_600SemiBold" },
+    telegramLink: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 20 },
+    telegramText: { fontSize: 14, color: c.textSecondary, fontFamily: "Inter_500Medium" },
   });
 }
 
@@ -351,6 +355,11 @@ export default function DashboardScreen() {
             </View>
           </View>
         </View>
+
+        <TouchableOpacity style={styles.telegramLink} onPress={() => Linking.openURL("https://t.me/aliaffiliate213")}>
+          <FontAwesome5 name="telegram" size={22} color="#229ED9" />
+          <Text style={styles.telegramText}>{t("social.followTelegram")}</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <Modal transparent visible={showDropdown !== null} animationType="fade" onRequestClose={() => setShowDropdown(null)}>

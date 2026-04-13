@@ -161,6 +161,8 @@ const en: Translations = {
   "generator.setupRequired": "Setup Required",
   "generator.setupText": "Go to Settings and enter your AliExpress Affiliate App Key and Secret to get started.",
   "generator.refresh": "Refresh",
+
+  "social.followTelegram": "Follow us on Telegram",
 };
 
 const ar: Translations = {
@@ -316,6 +318,8 @@ const ar: Translations = {
   "generator.setupRequired": "مطلوب إعداد",
   "generator.setupText": "اذهب إلى الإعدادات وأدخل مفتاح التطبيق والسر الخاص بحسابك في AliExpress للبدء.",
   "generator.refresh": "تحديث",
+
+  "social.followTelegram": "تابعنا على التلجرام",
 };
 
 const translations: Record<Language, Translations> = { en, ar };
