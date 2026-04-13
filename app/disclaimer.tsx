@@ -29,7 +29,7 @@ function makeStyles(c: AppColors) {
 const SECTIONS_EN = [
   {
     title: "Independent Application",
-    body: "AliAffiliate is an independent application developed to assist AliExpress Affiliate Program members. It is not affiliated with, endorsed by, or in any way officially connected to AliExpress, Alibaba Group, or any of their subsidiaries.",
+    body: "Ali Affiliate is an independent application developed to assist AliExpress Affiliate Program members. It is not affiliated with, endorsed by, or in any way officially connected to AliExpress, Alibaba Group, or any of their subsidiaries.",
   },
   {
     title: "Earnings & Commissions",
@@ -51,22 +51,22 @@ const SECTIONS_EN = [
   },
   {
     title: "Limitation of Liability",
-    body: "To the maximum extent permitted by applicable law, the developer of AliAffiliate shall not be liable for any indirect, incidental, special, or consequential damages arising from the use or inability to use this application.",
+    body: "To the maximum extent permitted by applicable law, the developer of Ali Affiliate shall not be liable for any indirect, incidental, special, or consequential damages arising from the use or inability to use this application.",
   },
 ];
 
 const SECTIONS_AR = [
   {
     title: "تطبيق مستقل",
-    body: "AliAffiliate هو تطبيق مستقل تم تطويره لمساعدة أعضاء برنامج الأفلييت في AliExpress. لا يرتبط هذا التطبيق بـ AliExpress أو مجموعة Alibaba أو أي من شركاتها التابعة، ولم تقم تلك الجهات بإقراره أو التصريح به.",
+    body: "تطبيق Ali Affiliate هو تطبيق مستقل تم تطويره لمساعدة أعضاء برنامج الأفلييت في علي اكسبراس. لا يرتبط هذا التطبيق بـ علي اكسبراس أو مجموعة علي بابا أو أي من شركاتها التابعة، ولم تقم تلك الجهات بإقراره أو التصريح به.",
   },
   {
     title: "الأرباح والعمولات",
     body: "جميع بيانات الأرباح والعمولات والطلبات المعروضة في هذا التطبيق يتم جلبها مباشرةً من واجهة برمجة تطبيقات AliExpress Affiliate باستخدام بيانات اعتمادك الخاصة، وهي مقدّمة لأغراض المرجعية والمتابعة فقط.",
     bullets: [
-      "قد تتغيّر نسب وقيم العمولات بناءً على سياسات AliExpress.",
+      "قد تتغيّر نسب وقيم العمولات بناءً على سياسات علي اكسبراس.",
       "قيم العمولة المقدّرة تقريبية وقابلة للتغيير.",
-      "تحدّد AliExpress وحدها المبالغ النهائية المسوّاة.",
+      "تحدّد علي اكسبراس وحدها المبالغ النهائية المسوّاة.",
       "لا يضمن مطوّر التطبيق دقة بيانات الأرباح.",
     ],
   },
@@ -76,11 +76,11 @@ const SECTIONS_AR = [
   },
   {
     title: "خدمات الطرف الثالث",
-    body: "يتفاعل هذا التطبيق مع واجهة برمجة تطبيقات AliExpress Affiliate. إن استخدامك لخدمات AliExpress يخضع لشروط خدمة AliExpress الخاصة وبنود برنامج الأفلييت. لا يتحمّل مطوّر التطبيق مسؤولية أي تغييرات في تلك الواجهات أو شروط البرنامج.",
+    body: "يتفاعل هذا التطبيق مع واجهة برمجة تطبيقات AliExpress Affiliate. إن استخدامك لخدمات علي اكسبراس يخضع لشروط خدمة علي اكسبراس الخاصة وبنود برنامج الأفلييت. لا يتحمّل مطوّر التطبيق مسؤولية أي تغييرات في تلك الواجهات أو شروط البرنامج.",
   },
   {
     title: "حدود المسؤولية",
-    body: "إلى الحدّ الأقصى الذي يسمح به القانون المعمول به، لا يتحمّل مطوّر AliAffiliate مسؤولية أي أضرار غير مباشرة أو عرضية أو خاصة أو تبعية تنشأ عن استخدام هذا التطبيق أو عدم القدرة على استخدامه.",
+    body: "إلى الحدّ الأقصى الذي يسمح به القانون المعمول به، لا يتحمّل مطوّر Ali Affiliate مسؤولية أي أضرار غير مباشرة أو عرضية أو خاصة أو تبعية تنشأ عن استخدام هذا التطبيق أو عدم القدرة على استخدامه.",
   },
 ];
 

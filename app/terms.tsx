@@ -29,11 +29,11 @@ function makeStyles(c: AppColors) {
 const SECTIONS_EN = [
   {
     title: "Acceptance of Terms",
-    body: "By downloading or using AliAffiliate, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the application.",
+    body: "By downloading or using Ali Affiliate, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the application.",
   },
   {
     title: "Purpose of the App",
-    body: "AliAffiliate is a personal productivity tool designed exclusively for members of the AliExpress Affiliate Program. It allows users to:",
+    body: "Ali Affiliate is a personal productivity tool designed exclusively for members of the AliExpress Affiliate Program. It allows users to:",
     bullets: [
       "Monitor their affiliate orders and commission earnings.",
       "Track order statuses (paid, received, settled, canceled).",
@@ -54,7 +54,7 @@ const SECTIONS_EN = [
   },
   {
     title: "API Credentials",
-    body: "Your App Key and App Secret are your personal credentials issued by AliExpress. You are solely responsible for maintaining the confidentiality of these credentials. Do not share them with others. The developer of AliAffiliate is not responsible for any unauthorized use of your credentials.",
+    body: "Your App Key and App Secret are your personal credentials issued by AliExpress. You are solely responsible for maintaining the confidentiality of these credentials. Do not share them with others. The developer of Ali Affiliate is not responsible for any unauthorized use of your credentials.",
   },
   {
     title: "Intellectual Property",
@@ -77,11 +77,11 @@ const SECTIONS_EN = [
 const SECTIONS_AR = [
   {
     title: "قبول الشروط",
-    body: "بتنزيل تطبيق AliAffiliate أو استخدامه، فإنك توافق على الالتزام بشروط الخدمة هذه. إن لم توافق على هذه الشروط، يُرجى عدم استخدام التطبيق.",
+    body: "بتنزيل تطبيق Ali Affiliate أو استخدامه، فإنك توافق على الالتزام بشروط الخدمة هذه. إن لم توافق على هذه الشروط، يُرجى عدم استخدام التطبيق.",
   },
   {
     title: "الغرض من التطبيق",
-    body: "AliAffiliate هو أداة إنتاجية شخصية مصمّمة حصراً لأعضاء برنامج الأفلييت في AliExpress. يتيح للمستخدمين:",
+    body: "تطبيق Ali Affiliate هو أداة إنتاجية شخصية مصمّمة حصراً لأعضاء برنامج الأفلييت في علي اكسبراس. \n  يتيح للمستخدمين:",
     bullets: [
       "متابعة طلبات الأفلييت وأرباح العمولات.",
       "تتبّع حالات الطلبات (مدفوعة، مستلمة، مسوّاة، ملغاة).",
@@ -95,14 +95,14 @@ const SECTIONS_AR = [
     bullets: [
       "تقديم بيانات اعتماد AliExpress Affiliate API الصحيحة (مفتاح التطبيق والسر).",
       "استخدام التطبيق للغرض المخصص له فقط.",
-      "الامتثال لشروط وأحكام برنامج الأفلييت في AliExpress.",
+      "الامتثال لشروط وأحكام برنامج الأفلييت في علي اكسبراس.",
       "عدم محاولة عكس هندسة التطبيق أو نسخه أو توزيعه.",
       "عدم استخدام التطبيق لأي غرض غير مشروع أو احتيالي.",
     ],
   },
   {
     title: "بيانات اعتماد API",
-    body: "مفتاح تطبيقك وسرّه هما بيانات اعتمادك الشخصية الصادرة عن AliExpress. أنت المسؤول الوحيد عن الحفاظ على سرية هذه البيانات. لا تشاركها مع الآخرين. لا يتحمّل مطوّر AliAffiliate مسؤولية أي استخدام غير مصرّح به لبيانات اعتمادك.",
+    body: "مفتاح تطبيقك وسرّه هما بيانات اعتمادك الشخصية الصادرة عن علي اكسبراس. أنت المسؤول الوحيد عن الحفاظ على سرية هذه البيانات. لا تشاركها مع الآخرين. لا يتحمّل مطوّر Ali Affiliate مسؤولية أي استخدام غير مصرّح به لبيانات اعتمادك.",
   },
   {
     title: "الملكية الفكرية",

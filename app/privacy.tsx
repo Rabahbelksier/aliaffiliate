@@ -46,11 +46,11 @@ const HIGHLIGHTS_AR = [
 const SECTIONS_EN = [
   {
     title: "Information We Collect",
-    body: "AliAffiliate does not collect, store, or transmit any personally identifiable information. We do not collect names, email addresses, phone numbers, location data, device identifiers, or any other personal information.",
+    body: "Ali Affiliate does not collect, store, or transmit any personally identifiable information. We do not collect names, email addresses, phone numbers, location data, device identifiers, or any other personal information.",
   },
   {
     title: "API Credentials Storage",
-    body: "Your AliExpress Affiliate App Key and App Secret are stored exclusively on your device using secure local storage (AsyncStorage). These credentials:",
+    body: "Your AliExpress Affiliate App Key and App Secret are stored exclusively on your device using secure local storage (AsyncStorage). \n  These credentials:",
     bullets: [
       "Are stored only on your device and never uploaded to any cloud service.",
       "Are used solely to sign API requests sent to AliExpress.",
@@ -65,7 +65,7 @@ const SECTIONS_EN = [
   },
   {
     title: "No Analytics or Tracking",
-    body: "AliAffiliate does not use any analytics SDKs, crash reporting tools, advertising frameworks, or tracking libraries. We do not monitor how you use the application. There are no third-party SDKs that collect behavioral data.",
+    body: "Ali Affiliate does not use any analytics SDKs, crash reporting tools, advertising frameworks, or tracking libraries. We do not monitor how you use the application. There are no third-party SDKs that collect behavioral data.",
   },
   {
     title: "No Third-Party Data Sharing",
@@ -83,7 +83,7 @@ const SECTIONS_EN = [
   },
   {
     title: "Children's Privacy",
-    body: "AliAffiliate is not intended for use by individuals under the age of 13. We do not knowingly collect any information from children under 13. If you believe a child has used this application, no personal data has been collected.",
+    body: "Ali Affiliate is not intended for use by individuals under the age of 13. We do not knowingly collect any information from children under 13. If you believe a child has used this application, no personal data has been collected.",
   },
   {
     title: "Changes to This Policy",
@@ -98,14 +98,14 @@ const SECTIONS_EN = [
 const SECTIONS_AR = [
   {
     title: "المعلومات التي نجمعها",
-    body: "لا يجمع تطبيق AliAffiliate أي معلومات تعريف شخصية ولا يخزّنها ولا يُرسلها. لا نجمع الأسماء أو عناوين البريد الإلكتروني أو أرقام الهواتف أو بيانات الموقع أو معرّفات الأجهزة أو أي معلومات شخصية أخرى.",
+    body: "لا يجمع تطبيق Ali Affiliate أي معلومات تعريف شخصية ولا يخزّنها ولا يُرسلها. لا نجمع الأسماء أو عناوين البريد الإلكتروني أو أرقام الهواتف أو بيانات الموقع أو معرّفات الأجهزة أو أي معلومات شخصية أخرى.",
   },
   {
     title: "تخزين بيانات اعتماد API",
-    body: "يُخزَّن مفتاح تطبيق AliExpress Affiliate وسرّه حصراً على جهازك باستخدام التخزين المحلي الآمن (AsyncStorage). هذه البيانات:",
+    body: "يُخزَّن مفتاح تطبيق AliExpress Affiliate وسرّه حصراً على جهازك باستخدام التخزين المحلي الآمن (AsyncStorage). \n  هذه البيانات:",
     bullets: [
       "مُخزَّنة على جهازك فقط ولا تُرفع إلى أي خدمة سحابية.",
-      "تُستخدم فقط لتوقيع طلبات API المُرسَلة إلى AliExpress.",
+      "تُستخدم فقط لتوقيع طلبات API المُرسَلة إلى علي اكسبراس.",
       "تُنقل عبر HTTPS إلى الخادم الخلفي للتطبيق لغرض وحيد هو توليد توقيعات طلبات AliExpress API.",
       "لا يُخزّنها الخادم الخلفي ولا يسجّلها ولا يحتفظ بها.",
       "تبقى تحت سيطرتك الكاملة — يمكنك حذفها في أي وقت من شاشة الإعدادات.",
@@ -117,7 +117,7 @@ const SECTIONS_AR = [
   },
   {
     title: "لا تحليلات ولا تتبّع",
-    body: "لا يستخدم AliAffiliate أي حزم تحليلات أو أدوات الإبلاغ عن الأعطال أو أُطر الإعلانات أو مكتبات التتبّع. لا نراقب كيفية استخدامك للتطبيق. لا توجد حزم طرف ثالث تجمع بيانات سلوكية.",
+    body: "لا يستخدم Ali Affiliate أي حزم تحليلات أو أدوات الإبلاغ عن الأعطال أو أُطر الإعلانات أو مكتبات التتبّع. لا نراقب كيفية استخدامك للتطبيق. لا توجد حزم طرف ثالث تجمع بيانات سلوكية.",
   },
   {
     title: "عدم مشاركة البيانات مع أطراف ثالثة",
@@ -135,7 +135,7 @@ const SECTIONS_AR = [
   },
   {
     title: "خصوصية الأطفال",
-    body: "لا يستهدف AliAffiliate الأفراد الذين تقل أعمارهم عن 13 عاماً. لا نجمع عن علم أي معلومات من الأطفال دون سن 13. إن كنت تعتقد أن طفلاً استخدم هذا التطبيق، فاعلم أنه لم تُجمع أي بيانات شخصية.",
+    body: "لا يستهدف Ali Affiliate الأفراد الذين تقل أعمارهم عن 13 عاماً. لا نجمع عن علم أي معلومات من الأطفال دون سن 13. إن كنت تعتقد أن طفلاً استخدم هذا التطبيق، فاعلم أنه لم تُجمع أي بيانات شخصية.",
   },
   {
     title: "التغييرات على هذه السياسة",
