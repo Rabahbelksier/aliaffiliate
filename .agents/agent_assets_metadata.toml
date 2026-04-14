@@ -4,10 +4,10 @@ uploads = []
 id = "JIpZmPZhxIiE1oscTreeE"
 uri = "file://assets/images/feature-graphic.png"
 type = "image"
-title = "ali-affiliate-feature-graphic"
+title = "ali-affiliate-3d-phone-feature-graphic"
 
 [[outputs]]
 id = "pv6SHgrXVStxaZOj1Uxg7"
 uri = "file://assets/images/feature-graphic.png"
 type = "image"
-title = "Feature Graphic — 1024×500"
+title = "Feature Graphic 3D — 1024×500"
