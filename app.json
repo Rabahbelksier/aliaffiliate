@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Ali Affiliate",
-    "slug": "Ali-Affiliate",
+    "slug": "ali-affiliate-arm64",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,11 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.AliAffiliate.app"
+      "bundleIdentifier": "com.aliaffiliate.app"
     },
     "android": {
       "versionCode": 1,
-      "package": "com.AliAffiliate.app",
+      "package": "com.aliaffiliate.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0A12",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -49,9 +49,9 @@
         "origin": "https://replit.com/"
       },
       "eas": {
-        "projectId": "79f0830b-3521-4a88-9a0d-5e89837eddfe"
+        "projectId": "0fdad9ac-c22e-4acb-b992-1ee19d4ac7d9"
       }
     },
-    "owner": "rabahapp"
+    "owner": "rabahbelksier"
   }
 }
