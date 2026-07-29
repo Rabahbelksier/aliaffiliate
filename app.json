@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Ali Affiliate",
-    "slug": "ali-affiliate-arm64",
-    "version": "1.0.0",
+    "name": "Ali teste",
+    "slug": "Ali-Affiliate",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "AliAffiliate",
@@ -19,7 +19,7 @@
     },
     "android": {
       "versionCode": 1,
-      "package": "com.aliaffiliate.app",
+      "package": "com.alitest.app",
       "adaptiveIcon": {
         "backgroundColor": "#0A0A12",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -49,9 +49,9 @@
         "origin": "https://replit.com/"
       },
       "eas": {
-        "projectId": "0320e610-db44-4a77-9dc5-9a101fffacc5"
+        "projectId": "79f0830b-3521-4a88-9a0d-5e89837eddfe"
       }
     },
-    "owner": "offres_365"
+    "owner": "rabahapp"
   }
 }
