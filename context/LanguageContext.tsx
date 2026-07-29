@@ -163,6 +163,10 @@ const en: Translations = {
   "generator.refresh": "Refresh",
 
   "social.followTelegram": "Follow us on Telegram",
+
+  "payout.title": "Commission Paid This Month 🎉",
+  "payout.message": "Your commission is ready to withdraw",
+  "payout.amountLabel": "Commission Amount",
 };
 
 const ar: Translations = {
@@ -320,6 +324,10 @@ const ar: Translations = {
   "generator.refresh": "تحديث",
 
   "social.followTelegram": "تابعنا على التلجرام",
+
+  "payout.title": "تم صب عمولة هذا الشهر 🎉",
+  "payout.message": "عمولتك جاهزة للسحب",
+  "payout.amountLabel": "قيمة العمولة",
 };
 
 const translations: Record<Language, Translations> = { en, ar };

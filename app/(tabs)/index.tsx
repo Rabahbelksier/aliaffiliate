@@ -30,6 +30,11 @@ import {
   getMonthString,
   getCurrentMonthRange,
 } from "@/hooks/useOrders";
+import {
+  savePayoutSnapshot,
+  checkPayoutNotification,
+} from "@/hooks/usePayoutNotification";
+import { PayoutModal } from "@/components/PayoutModal";
 import type { AppColors } from "@/constants/colors";
 
 type RangePeriod = "1m" | "2m" | "3m" | "4m" | "5m" | "6m";
@@ -143,6 +148,7 @@ export default function DashboardScreen() {
   const canceledRangeRef = useRef<RangePeriod>("6m");
 
   const [showDropdown, setShowDropdown] = useState<null | "settled" | "canceled">(null);
+  const [payoutAmount, setPayoutAmount] = useState<number | null>(null);
 
   // Ref to track the current in-flight dashboard AbortController
   const dashboardAbortRef = useRef<AbortController | null>(null);
@@ -304,6 +310,18 @@ export default function DashboardScreen() {
 
         // Persist locally for next app launch
         saveDashboardData(nextData);
+
+        // Payout notification:
+        //  • Save snapshot while "received last month" commission is visible (> 0)
+        //  • From day 20 onward, check if the commission has cleared (payout happened)
+        //    and notify the user once per month
+        const payoutMonthStr = getMonthString(-1);
+        await savePayoutSnapshot(nextData.receivedLastMonth.commission, payoutMonthStr);
+        const payoutAmt = await checkPayoutNotification(
+          nextData.receivedLastMonth.commission,
+          payoutMonthStr
+        );
+        if (payoutAmt !== null) setPayoutAmount(payoutAmt);
       } catch {
         if (!signal.aborted) {
           setError(t("dashboard.error"));
@@ -654,6 +672,8 @@ export default function DashboardScreen() {
           <Text style={styles.telegramText}>{t("social.followTelegram")}</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <PayoutModal amount={payoutAmount} onClose={() => setPayoutAmount(null)} />
 
       <Modal
         transparent
