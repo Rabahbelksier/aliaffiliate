@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
 import { StatCard } from "@/components/StatCard";
@@ -104,11 +105,18 @@ function makeStyles(c: AppColors) {
 }
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { settings, isConfigured } = useSettings();
   const { t, isRTL, language } = useLanguage();
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+
+  // Stable ranges computed once per render (date-based, session-stable)
+  const pendingRange = getMaxAllowedRange();
+  const currentMonthRange = getCurrentMonthRange();
+  const thisMonthStr = getMonthString(0);
+  const lastMonthStr = getMonthString(-1);
 
   const [data, setData] = useState<DashboardData>(emptyData);
   const [isLoading, setIsLoading] = useState(false);
@@ -322,12 +330,126 @@ export default function DashboardScreen() {
 
         <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.orderStatus")}</Text>
         <View style={styles.statsGrid}>
-          <StatCard label={t("stat.paidPending")} value={data.paid.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"} isRTL={isRTL} badge={t("stat.all")} />
-          <StatCard label={t("stat.paidPendingThisMonth")} value={data.paidThisMonth.count} color={colors.info} subLabel={t("stat.estCommission")} subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} badge={t("stat.thisMonth")} />
-          <StatCard label={t("stat.receivedThisMonth")} value={data.receivedThisMonth.count} color={colors.success} subLabel={t("stat.estCommission")} subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
-          <StatCard label={t("stat.receivedLastMonth")} value={data.receivedLastMonth.count} color={colors.primary} subLabel={t("stat.estCommission")} subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"} isRTL={isRTL} />
-          <StatCard label={t("stat.settledOrders")} value={isLoadingSettled ? "…" : data.settled.count} color={colors.accent} subLabel={t("stat.settledCommission")} subValue={isLoadingSettled ? "…" : data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"} isRTL={isRTL} rangeLabel={getRangeLabel(settledRange)} onRangePress={() => setShowDropdown("settled")} />
-          <StatCard label={t("stat.canceledOrders")} value={isLoadingCanceled ? "…" : data.canceled.count} color={colors.danger} subLabel={t("stat.commission")} subValue={isLoadingCanceled ? "…" : data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"} isRTL={isRTL} rangeLabel={getRangeLabel(canceledRange)} onRangePress={() => setShowDropdown("canceled")} />
+          <StatCard
+            label={t("stat.paidPending")}
+            value={data.paid.count}
+            color={colors.info}
+            subLabel={t("stat.estCommission")}
+            subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            badge={t("stat.all")}
+            onPress={() => router.push({
+              pathname: "/orders-list",
+              params: {
+                title: `${t("stat.paidPending")} · ${t("stat.all")}`,
+                status: "Payment Completed",
+                startTime: pendingRange.start,
+                endTime: pendingRange.end,
+                timeType: "1",
+                emptyLabel: t("orders.empty"),
+              },
+            })}
+          />
+          <StatCard
+            label={t("stat.paidPendingThisMonth")}
+            value={data.paidThisMonth.count}
+            color={colors.info}
+            subLabel={t("stat.estCommission")}
+            subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            badge={t("stat.thisMonth")}
+            onPress={() => router.push({
+              pathname: "/orders-list",
+              params: {
+                title: `${t("stat.paidPendingThisMonth")} · ${t("stat.thisMonth")}`,
+                status: "Payment Completed",
+                startTime: currentMonthRange.start,
+                endTime: currentMonthRange.end,
+                timeType: "1",
+                emptyLabel: t("orders.empty"),
+              },
+            })}
+          />
+          <StatCard
+            label={t("stat.receivedThisMonth")}
+            value={data.receivedThisMonth.count}
+            color={colors.success}
+            subLabel={t("stat.estCommission")}
+            subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            onPress={() => router.push({
+              pathname: "/orders-list",
+              params: {
+                title: t("stat.receivedThisMonth"),
+                finishedMonth: thisMonthStr,
+                emptyLabel: t("orders.empty"),
+              },
+            })}
+          />
+          <StatCard
+            label={t("stat.receivedLastMonth")}
+            value={data.receivedLastMonth.count}
+            color={colors.primary}
+            subLabel={t("stat.estCommission")}
+            subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            onPress={() => router.push({
+              pathname: "/orders-list",
+              params: {
+                title: t("stat.receivedLastMonth"),
+                finishedMonth: lastMonthStr,
+                emptyLabel: t("orders.empty"),
+              },
+            })}
+          />
+          <StatCard
+            label={t("stat.settledOrders")}
+            value={isLoadingSettled ? "…" : data.settled.count}
+            color={colors.accent}
+            subLabel={t("stat.settledCommission")}
+            subValue={isLoadingSettled ? "…" : data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            rangeLabel={getRangeLabel(settledRange)}
+            onRangePress={() => setShowDropdown("settled")}
+            onPress={() => {
+              const rangeObj = getRangeByPeriod(RANGE_DAYS[settledRangeRef.current]);
+              router.push({
+                pathname: "/orders-list",
+                params: {
+                  title: `${t("stat.settledOrders")} · ${getRangeLabel(settledRange)}`,
+                  status: "Completed Settlement",
+                  startTime: rangeObj.start,
+                  endTime: rangeObj.end,
+                  timeType: "1",
+                  emptyLabel: t("settled.empty"),
+                },
+              });
+            }}
+          />
+          <StatCard
+            label={t("stat.canceledOrders")}
+            value={isLoadingCanceled ? "…" : data.canceled.count}
+            color={colors.danger}
+            subLabel={t("stat.commission")}
+            subValue={isLoadingCanceled ? "…" : data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"}
+            isRTL={isRTL}
+            rangeLabel={getRangeLabel(canceledRange)}
+            onRangePress={() => setShowDropdown("canceled")}
+            onPress={() => {
+              const rangeObj = getRangeByPeriod(RANGE_DAYS[canceledRangeRef.current]);
+              router.push({
+                pathname: "/orders-list",
+                params: {
+                  title: `${t("stat.canceledOrders")} · ${getRangeLabel(canceledRange)}`,
+                  status: "Invalid",
+                  startTime: rangeObj.start,
+                  endTime: rangeObj.end,
+                  timeType: "1",
+                  emptyLabel: t("canceled.empty"),
+                },
+              });
+            }}
+          />
         </View>
 
         <Text style={[styles.sectionTitle, { textAlign }]}>{t("dashboard.commissionSummary")}</Text>

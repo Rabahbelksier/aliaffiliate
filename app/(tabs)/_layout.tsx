@@ -16,10 +16,6 @@ function NativeTabLayout() {
         <Icon sf={{ default: "chart.bar", selected: "chart.bar.fill" }} />
         <Label>{t("tab.dashboard")}</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="orders">
-        <Icon sf={{ default: "list.bullet.rectangle", selected: "list.bullet.rectangle.fill" }} />
-        <Label>{t("tab.orders")}</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="generator">
         <Icon sf={{ default: "link.badge.plus", selected: "link.badge.plus" }} />
         <Label>{t("tab.generator")}</Label>
@@ -71,24 +67,15 @@ function ClassicTabLayout() {
       />
       <Tabs.Screen
         name="orders"
-        options={{
-          title: t("tab.orders"),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list" size={size} color={color} />
-          ),
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="settled"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="canceled"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="generator"
