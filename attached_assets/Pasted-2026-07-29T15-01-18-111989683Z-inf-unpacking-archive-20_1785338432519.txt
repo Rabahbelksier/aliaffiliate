@@ -1,0 +1,143 @@
+2026-07-29T15:01:18.111989683Z [inf]  unpacking archive
+2026-07-29T15:01:18.715097566Z [inf]  uploading snapshot
+2026-07-29T15:01:18.739102906Z [inf]  using build driver railpack-v0.35.0
+2026-07-29T15:01:19.456696518Z [inf]  scheduling build on Metal builder "builder-hdwwii"
+2026-07-29T15:01:19.694724078Z [inf]                     
+2026-07-29T15:01:19.694739391Z [inf]  [38;2;125;86;243m╭─────────────────╮[0m
+2026-07-29T15:01:19.694741254Z [inf]  [38;2;125;86;243m│[0m Railpack 0.35.0 [38;2;125;86;243m│[0m
+2026-07-29T15:01:19.694742325Z [inf]  [38;2;125;86;243m╰─────────────────╯[0m
+2026-07-29T15:01:19.694742957Z [inf]  
+2026-07-29T15:01:19.694745090Z [inf]    [33m⚠ No node package manager detected, using npm[0m
+2026-07-29T15:01:19.694746872Z [inf]    [97m↳ Detected Node[0m
+2026-07-29T15:01:19.694748084Z [inf]    [97m↳ Using npm package manager[0m
+2026-07-29T15:01:19.694748955Z [inf]    [97m↳ Custom start command detected, skipping Caddy start[0m
+2026-07-29T15:01:19.694749827Z [inf]              
+2026-07-29T15:01:19.694751189Z [inf]    [1mPackages[0m  
+2026-07-29T15:01:19.694752070Z [inf]    [38;5;238m──────────[0m
+2026-07-29T15:01:19.694754043Z [inf]    [95mnode[0m  [38;5;238m│[0m  [96m22.23.1[0m  [38;5;238m│[0m  railpack default (22)
+2026-07-29T15:01:19.694754774Z [inf]              
+2026-07-29T15:01:19.694755445Z [inf]    [1mSteps[0m     
+2026-07-29T15:01:19.694756397Z [inf]    [38;5;238m──────────[0m
+2026-07-29T15:01:19.694757158Z [inf]    [95m▸ install[0m
+2026-07-29T15:01:19.694758009Z [inf]      [38;5;245m$[0m [1mnpm install[0m
+2026-07-29T15:01:19.694758710Z [inf]           
+2026-07-29T15:01:19.694759351Z [inf]    [95m▸ build[0m
+2026-07-29T15:01:19.694760913Z [inf]      [38;5;245m$[0m [1mEXPO_PUBLIC_DOMAIN=aliaffiliate.up.railway.app npm run expo:static:build && npm run server:build[0m
+2026-07-29T15:01:19.694761585Z [inf]              
+2026-07-29T15:01:19.694762226Z [inf]    [1mDeploy[0m    
+2026-07-29T15:01:19.694763007Z [inf]    [38;5;238m──────────[0m
+2026-07-29T15:01:19.694763778Z [inf]      [38;5;245m$[0m [1mnpm run server:prod[0m
+2026-07-29T15:01:19.694764389Z [inf]  
+2026-07-29T15:01:20.688283368Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.35.0
+2026-07-29T15:01:28.017912496Z [inf]  resolve image config for docker-image://ghcr.io/railwayapp/railpack-frontend:v0.35.0
+2026-07-29T15:01:28.018388841Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.35.0@sha256:bc73534934e7929ab3dc41765fb7e25c8c69d9be98c43ef8792fea51f65317bd
+2026-07-29T15:01:28.018506007Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.35.0@sha256:bc73534934e7929ab3dc41765fb7e25c8c69d9be98c43ef8792fea51f65317bd
+2026-07-29T15:01:28.028547062Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.35.0@sha256:bc73534934e7929ab3dc41765fb7e25c8c69d9be98c43ef8792fea51f65317bd
+2026-07-29T15:01:28.029045199Z [inf]  docker-image://ghcr.io/railwayapp/railpack-frontend:v0.35.0@sha256:bc73534934e7929ab3dc41765fb7e25c8c69d9be98c43ef8792fea51f65317bd
+2026-07-29T15:01:28.222706549Z [inf]  load build definition from ./railpack-plan.json
+2026-07-29T15:01:28.222896644Z [inf]  load build definition from ./railpack-plan.json
+2026-07-29T15:01:28.223025488Z [inf]  load build definition from ./railpack-plan.json
+2026-07-29T15:01:28.261525429Z [inf]  load build definition from ./railpack-plan.json
+2026-07-29T15:01:29.052694013Z [inf]  copy /mise/installs
+2026-07-29T15:01:29.052695896Z [inf]  copy /mise/shims
+2026-07-29T15:01:29.052696387Z [inf]  install mise packages: node
+2026-07-29T15:01:29.052697168Z [inf]  create mise config
+2026-07-29T15:01:29.052697759Z [inf]  mkdir /etc/mise
+2026-07-29T15:01:29.052698570Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.7.15
+2026-07-29T15:01:29.052699241Z [inf]  install apt packages: libatomic1
+2026-07-29T15:01:29.052699882Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.7.15
+2026-07-29T15:01:29.052960303Z [inf]  npm install
+2026-07-29T15:01:29.052961094Z [inf]  mkdir -p /app/node_modules/.cache
+2026-07-29T15:01:29.052961675Z [inf]  copy /app
+2026-07-29T15:01:29.052962296Z [inf]  [railpack] secrets hash
+2026-07-29T15:01:29.052962887Z [inf]  copy /root/.cache
+2026-07-29T15:01:29.052963478Z [inf]  copy .
+2026-07-29T15:01:29.052964099Z [inf]  copy /app/node_modules
+2026-07-29T15:01:29.052964610Z [inf]  copy / /app
+2026-07-29T15:01:29.052965111Z [inf]  loading .
+2026-07-29T15:01:29.052965581Z [inf]  copy /usr/local/bin/mise
+2026-07-29T15:01:29.052966182Z [inf]  copy /etc/mise/config.toml
+2026-07-29T15:01:29.052966743Z [inf]  copy / /app
+2026-07-29T15:01:29.052967203Z [inf]  EXPO_PUBLIC_DOMAIN=aliaffiliate.up.railway.app npm run expo:static:build && npm run server:build
+2026-07-29T15:01:29.052967654Z [inf]  [railpack] loading secrets
+2026-07-29T15:01:29.052968245Z [inf]  [railpack] copy secrets hash
+2026-07-29T15:01:29.052968686Z [inf]  [railpack] merge $packages:apt:runtime, $packages:mise, $build, $build
+2026-07-29T15:01:29.052970919Z [inf]  copy /root/.local/state/mise
+2026-07-29T15:01:29.052971660Z [inf]  [railpack] copy used secrets hash
+2026-07-29T15:01:29.052972291Z [inf]  [railpack] hash used secrets
+2026-07-29T15:01:29.053490519Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.7.15
+2026-07-29T15:01:29.053491881Z [inf]  [railpack] loading secrets
+2026-07-29T15:01:29.053492452Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.7.15
+2026-07-29T15:01:29.053492983Z [inf]  [railpack] secrets hash
+2026-07-29T15:01:29.053526193Z [inf]  [railpack] secrets hash
+2026-07-29T15:01:29.053530559Z [inf]  loading .
+2026-07-29T15:01:29.218999883Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.7.15
+2026-07-29T15:01:29.220191723Z [inf]  install apt packages: libatomic1
+2026-07-29T15:01:29.221508519Z [inf]  docker-image://ghcr.io/railwayapp/railpack-builder:mise-2026.7.15
+2026-07-29T15:01:29.226137709Z [inf]  loading .
+2026-07-29T15:01:29.226139132Z [inf]  mkdir /etc/mise
+2026-07-29T15:01:29.226139833Z [inf]  create mise config
+2026-07-29T15:01:29.226140344Z [inf]  install mise packages: node
+2026-07-29T15:01:29.226140874Z [inf]  copy /mise/shims
+2026-07-29T15:01:29.226141525Z [inf]  copy /mise/installs
+2026-07-29T15:01:29.226142176Z [inf]  copy /usr/local/bin/mise
+2026-07-29T15:01:29.226142697Z [inf]  copy /etc/mise/config.toml
+2026-07-29T15:01:29.226143258Z [inf]  copy /root/.local/state/mise
+2026-07-29T15:01:29.226157800Z [inf]  [railpack] secrets hash
+2026-07-29T15:01:29.237782112Z [inf]  copy /root/.local/state/mise
+2026-07-29T15:01:29.300245760Z [inf]  [railpack] secrets hash
+2026-07-29T15:01:29.356087407Z [inf]  loading .
+2026-07-29T15:01:29.367070476Z [inf]  install mise packages: node
+2026-07-29T15:01:29.367090746Z [inf]  install mise packages: node
+2026-07-29T15:01:29.367106681Z [inf]  copy / /app
+2026-07-29T15:01:29.464803125Z [inf]  [railpack] loading secrets
+2026-07-29T15:01:29.478105386Z [inf]  [railpack] loading secrets
+2026-07-29T15:01:29.490790130Z [inf]  copy / /app
+2026-07-29T15:01:29.490791712Z [inf]  [railpack] loading secrets
+2026-07-29T15:01:29.491841819Z [inf]  [railpack] copy secrets hash
+2026-07-29T15:01:29.567583172Z [inf]  [railpack] copy secrets hash
+2026-07-29T15:01:29.580267355Z [inf]  [railpack] hash used secrets
+2026-07-29T15:01:29.818401533Z [inf]  [railpack] hash used secrets
+2026-07-29T15:01:29.895640824Z [inf]  [railpack] copy used secrets hash
+2026-07-29T15:01:29.908541232Z [inf]  mkdir -p /app/node_modules/.cache
+2026-07-29T15:01:30.292176094Z [inf]  mkdir -p /app/node_modules/.cache
+2026-07-29T15:01:30.305674650Z [inf]  npm install
+2026-07-29T15:01:31.062405162Z [inf]  npm warn config production Use `--omit=dev` instead.
+
+2026-07-29T15:01:34.98334936Z [inf]  npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+
+2026-07-29T15:01:35.028720618Z [inf]  npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+
+2026-07-29T15:01:35.078780334Z [inf]  npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+
+2026-07-29T15:01:35.149504454Z [inf]  npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+2026-07-29T15:01:35.149667158Z [inf]  npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+2026-07-29T15:01:35.150085186Z [inf]  npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+2026-07-29T15:01:35.151591367Z [inf]  npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+
+2026-07-29T15:01:35.163502029Z [inf]  npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+
+2026-07-29T15:01:35.640337797Z [inf]  npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+
+2026-07-29T15:03:19.937574764Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.7.15
+2026-07-29T15:03:20.044540204Z [inf]  docker-image://ghcr.io/railwayapp/railpack-runtime:mise-2026.7.15
+2026-07-29T15:04:41.292577851Z [inf]  create mise config
+2026-07-29T15:04:41.300768147Z [inf]  create mise config
+2026-07-29T15:05:45.694689194Z [inf]  npm error code ENOTFOUND
+npm error syscall getaddrinfo
+npm error errno ENOTFOUND
+npm error network request to http://package-firewall.replit.local/npm/tar/-/tar-7.5.22.tgz failed, reason: getaddrinfo ENOTFOUND package-firewall.replit.local
+
+2026-07-29T15:05:45.69470678Z [inf]  npm error network This is a problem related to network connectivity.
+npm error network In most cases you are behind a proxy or have bad network settings.
+npm error network
+npm error network If you are behind a proxy, please make sure that the
+npm error network 'proxy' config is set properly.  See: 'npm help config'
+
+2026-07-29T15:05:45.696698019Z [inf]  npm error A complete log of this run can be found in: /root/.npm/_logs/2026-07-29T15_01_30_992Z-debug-0.log
+
+2026-07-29T15:05:46.076601279Z [err]  npm install
+2026-07-29T15:05:46.106644404Z [err]  Build Failed: build daemon returned an error < failed to solve: process "npm install" did not complete successfully: exit code: 1 >
