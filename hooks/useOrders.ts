@@ -28,6 +28,7 @@ export interface OrdersResponse {
   orders: AliOrder[];
   error?: string;
   resp_code?: number;
+  fromCache?: boolean;
 }
 
 export interface FetchOrdersParams {
@@ -100,10 +101,77 @@ export function getMonthString(monthOffset = 0): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-const CACHE_PREFIX = "@aliaffiliate_orders_v2_";
+const CACHE_PREFIX = "@aliaffiliate_orders_v3_";
+// How long a cached response is considered fresh (5 minutes)
+const CACHE_TTL_MS = 5 * 60 * 1000;
+// How long before a cache entry is fully expired and eligible for cleanup (24 hours)
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResponse> {
-  const cacheKey = CACHE_PREFIX + JSON.stringify(params);
+/**
+ * Build a stable cache key by normalizing datetime strings to date-only (YYYY-MM-DD).
+ * This prevents a new unique key on every call (which was the root cause of cache bloat).
+ * The secret key is excluded from the key to avoid storing it.
+ */
+function buildCacheKey(params: FetchOrdersParams): string {
+  const { app_secret: _secret, ...rest } = params;
+  const normalized = {
+    ...rest,
+    // Truncate "YYYY-MM-DD HH:MM:SS" → "YYYY-MM-DD" for date-stable keys
+    start_time: params.start_time ? params.start_time.split(" ")[0] : undefined,
+    end_time: params.end_time ? params.end_time.split(" ")[0] : undefined,
+  };
+  return CACHE_PREFIX + JSON.stringify(normalized);
+}
+
+/**
+ * Remove cache entries older than CACHE_MAX_AGE_MS to prevent AsyncStorage bloat.
+ * Safe to call in the background — does not throw.
+ */
+export async function cleanExpiredCache(): Promise<void> {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    const orderKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));
+    if (orderKeys.length === 0) return;
+
+    const now = Date.now();
+    const pairs = await AsyncStorage.multiGet(orderKeys);
+    const toRemove: string[] = [];
+
+    for (const [key, value] of pairs) {
+      if (!value) {
+        toRemove.push(key);
+        continue;
+      }
+      try {
+        const { ts } = JSON.parse(value);
+        if (!ts || now - ts > CACHE_MAX_AGE_MS) {
+          toRemove.push(key);
+        }
+      } catch {
+        toRemove.push(key);
+      }
+    }
+
+    if (toRemove.length > 0) {
+      await AsyncStorage.multiRemove(toRemove);
+    }
+  } catch {
+    // Non-critical — never throw from cleanup
+  }
+}
+
+/**
+ * Fetch orders from the backend, with a TTL-aware cache layer.
+ *
+ * - On network success: update the cache and return fresh data.
+ * - On network failure: serve stale cache regardless of TTL as a fallback.
+ * - If signal is aborted: rethrow immediately without hitting the cache.
+ */
+export async function fetchOrders(
+  params: FetchOrdersParams,
+  signal?: AbortSignal,
+): Promise<OrdersResponse> {
+  const cacheKey = buildCacheKey(params);
 
   try {
     const baseUrl = getApiUrl();
@@ -113,6 +181,7 @@ export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResp
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
+      signal,
     });
 
     if (!res.ok) {
@@ -125,16 +194,25 @@ export async function fetchOrders(params: FetchOrdersParams): Promise<OrdersResp
       throw new Error(data.error);
     }
 
-    await AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+    // Store fresh result — fire-and-forget, never block the return
+    AsyncStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() })).catch(() => {});
 
     return data;
   } catch (err) {
-    // Try to serve from cache on network failure
-    const cached = await AsyncStorage.getItem(cacheKey);
-    if (cached) {
-      const { data } = JSON.parse(cached);
-      return { ...data, fromCache: true } as OrdersResponse;
+    // Re-throw immediately on abort — do not attempt cache lookup
+    if (signal?.aborted) throw err;
+
+    // On any other failure, try to serve the last known good response
+    try {
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        const { data } = JSON.parse(cached);
+        return { ...data, fromCache: true } as OrdersResponse;
+      }
+    } catch {
+      // Cache read failed — fall through to rethrow
     }
+
     throw err;
   }
 }

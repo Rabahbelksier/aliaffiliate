@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Linking,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, FontAwesome5 } from "@expo/vector-icons";
@@ -20,7 +21,15 @@ import { StatCard } from "@/components/StatCard";
 import { useSettings } from "@/context/SettingsContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useColors } from "@/hooks/useColors";
-import { fetchOrders, type AliOrder, getMaxAllowedRange, formatDateForApi, getMonthString, getCurrentMonthRange } from "@/hooks/useOrders";
+import {
+  fetchOrders,
+  cleanExpiredCache,
+  type AliOrder,
+  getMaxAllowedRange,
+  formatDateForApi,
+  getMonthString,
+  getCurrentMonthRange,
+} from "@/hooks/useOrders";
 import type { AppColors } from "@/constants/colors";
 
 type RangePeriod = "1m" | "2m" | "3m" | "4m" | "5m" | "6m";
@@ -33,6 +42,8 @@ const RANGE_DAYS: Record<RangePeriod, number> = {
   "5m": 150,
   "6m": 179,
 };
+
+const DASHBOARD_CACHE_KEY = "@aliaffiliate_dashboard_data";
 
 function getRangeByPeriod(days: number): { start: string; end: string } {
   const now = new Date();
@@ -133,6 +144,9 @@ export default function DashboardScreen() {
 
   const [showDropdown, setShowDropdown] = useState<null | "settled" | "canceled">(null);
 
+  // Ref to track the current in-flight dashboard AbortController
+  const dashboardAbortRef = useRef<AbortController | null>(null);
+
   function setSettledRange(r: RangePeriod) {
     settledRangeRef.current = r;
     setSettledRangeState(r);
@@ -154,105 +168,222 @@ export default function DashboardScreen() {
   const getRangeLabel = (range: RangePeriod) =>
     RANGE_OPTIONS.find((o) => o.key === range)?.label ?? range;
 
-  const loadDashboard = useCallback(async (refresh = false) => {
-    if (!isConfigured) return;
-    setError(null);
-    if (refresh) setIsRefreshing(true);
-    else setIsLoading(true);
-
-    const pendingRange = getMaxAllowedRange();
-    const currentMonthRange = getCurrentMonthRange();
-    const thisMonthStr = getMonthString(0);
-    const lastMonthStr = getMonthString(-1);
-    const settledRangeObj = getRangeByPeriod(RANGE_DAYS[settledRangeRef.current]);
-    const canceledRangeObj = getRangeByPeriod(RANGE_DAYS[canceledRangeRef.current]);
-
-    const b = {
-      app_key: settings.app_key,
-      app_secret: settings.app_secret,
-      page_size: 50,
-    };
-
+  /**
+   * Save the latest dashboard data to local storage so it survives app restarts.
+   * Errors are silently ignored — persistence is best-effort.
+   */
+  const saveDashboardData = useCallback(async (d: DashboardData) => {
     try {
-      const [paidRes, paidThisMonthRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] = await Promise.allSettled([
-        fetchOrders({ ...b, status: "Payment Completed", start_time: pendingRange.start, end_time: pendingRange.end }),
-        fetchOrders({ ...b, status: "Payment Completed", start_time: currentMonthRange.start, end_time: currentMonthRange.end }),
-        fetchOrders({ ...b, finished_month: thisMonthStr }),
-        fetchOrders({ ...b, finished_month: lastMonthStr }),
-        fetchOrders({ ...b, status: "Completed Settlement", start_time: settledRangeObj.start, end_time: settledRangeObj.end }),
-        fetchOrders({ ...b, status: "Invalid", start_time: canceledRangeObj.start, end_time: canceledRangeObj.end }),
-      ]);
+      await AsyncStorage.setItem(DASHBOARD_CACHE_KEY, JSON.stringify(d));
+    } catch {}
+  }, []);
 
-      const paid = paidRes.status === "fulfilled" ? paidRes.value : { orders: [], total_record_count: 0 };
-      const paidThisMonth = paidThisMonthRes.status === "fulfilled" ? paidThisMonthRes.value : { orders: [], total_record_count: 0 };
-      const thisM = thisMonthRes.status === "fulfilled" ? thisMonthRes.value : { orders: [], total_record_count: 0 };
-      const lastM = lastMonthRes.status === "fulfilled" ? lastMonthRes.value : { orders: [], total_record_count: 0 };
-      const settled = settledRes.status === "fulfilled" ? settledRes.value : { orders: [], total_record_count: 0 };
-      const canceled = canceledRes.status === "fulfilled" ? canceledRes.value : { orders: [], total_record_count: 0 };
-
-      setData({
-        paid: { count: paid.total_record_count, commission: sumCommission(paid.orders) },
-        paidThisMonth: { count: paidThisMonth.total_record_count, commission: sumCommission(paidThisMonth.orders) },
-        receivedThisMonth: { count: thisM.total_record_count, commission: sumCommission(thisM.orders) },
-        receivedLastMonth: { count: lastM.total_record_count, commission: sumCommission(lastM.orders) },
-        settled: { count: settled.total_record_count, commission: sumCommission(settled.orders) },
-        canceled: { count: canceled.total_record_count, commission: sumCommission(canceled.orders) },
-      });
-      setLastUpdated(new Date());
-    } catch {
-      setError(t("dashboard.error"));
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [settings, isConfigured]);
-
-  const loadSettledStat = useCallback(async (range: RangePeriod) => {
-    if (!isConfigured) return;
-    setIsLoadingSettled(true);
-    const rangeObj = getRangeByPeriod(RANGE_DAYS[range]);
+  /**
+   * Load previously saved dashboard data and display it immediately.
+   * Called once on mount so users see data before the network request completes.
+   */
+  const loadSavedDashboardData = useCallback(async () => {
     try {
-      const res = await fetchOrders({
+      const saved = await AsyncStorage.getItem(DASHBOARD_CACHE_KEY);
+      if (saved) {
+        const parsed: DashboardData = JSON.parse(saved);
+        setData(parsed);
+      }
+    } catch {}
+  }, []);
+
+  /**
+   * Clear the saved dashboard data snapshot.
+   * Called before a pull-to-refresh so cards show a clean loading state
+   * rather than stale values, and fresh data replaces them on success.
+   */
+  const clearSavedDashboardData = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem(DASHBOARD_CACHE_KEY);
+    } catch {}
+  }, []);
+
+  const loadDashboard = useCallback(
+    async (refresh = false) => {
+      if (!isConfigured) return;
+
+      // Cancel any in-flight dashboard request before starting a new one
+      dashboardAbortRef.current?.abort();
+      const controller = new AbortController();
+      dashboardAbortRef.current = controller;
+      const { signal } = controller;
+
+      setError(null);
+
+      if (refresh) {
+        // Pull-to-refresh: clear local snapshot so cards reset to loading state
+        setData(emptyData);
+        await clearSavedDashboardData();
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      const pendingRng = getMaxAllowedRange();
+      const currentMonthRng = getCurrentMonthRange();
+      const thisMonth = getMonthString(0);
+      const lastMonth = getMonthString(-1);
+      const settledRangeObj = getRangeByPeriod(RANGE_DAYS[settledRangeRef.current]);
+      const canceledRangeObj = getRangeByPeriod(RANGE_DAYS[canceledRangeRef.current]);
+
+      const base = {
         app_key: settings.app_key,
         app_secret: settings.app_secret,
         page_size: 50,
-        status: "Completed Settlement",
-        start_time: rangeObj.start,
-        end_time: rangeObj.end,
-      });
-      setData((prev) => ({
-        ...prev,
-        settled: { count: res.total_record_count, commission: sumCommission(res.orders) },
-      }));
-    } catch {
-      setData((prev) => ({ ...prev, settled: { count: 0, commission: 0 } }));
-    } finally { setIsLoadingSettled(false); }
-  }, [settings, isConfigured]);
+      };
 
-  const loadCanceledStat = useCallback(async (range: RangePeriod) => {
-    if (!isConfigured) return;
-    setIsLoadingCanceled(true);
-    const rangeObj = getRangeByPeriod(RANGE_DAYS[range]);
-    try {
-      const res = await fetchOrders({
-        app_key: settings.app_key,
-        app_secret: settings.app_secret,
-        page_size: 50,
-        status: "Invalid",
-        start_time: rangeObj.start,
-        end_time: rangeObj.end,
-      });
-      setData((prev) => ({
-        ...prev,
-        canceled: { count: res.total_record_count, commission: sumCommission(res.orders) },
-      }));
-    } catch {
-      setData((prev) => ({ ...prev, canceled: { count: 0, commission: 0 } }));
-    } finally { setIsLoadingCanceled(false); }
-  }, [settings, isConfigured]);
+      try {
+        const [paidRes, paidThisMonthRes, thisMonthRes, lastMonthRes, settledRes, canceledRes] =
+          await Promise.allSettled([
+            fetchOrders(
+              { ...base, status: "Payment Completed", start_time: pendingRng.start, end_time: pendingRng.end },
+              signal,
+            ),
+            fetchOrders(
+              { ...base, status: "Payment Completed", start_time: currentMonthRng.start, end_time: currentMonthRng.end },
+              signal,
+            ),
+            fetchOrders({ ...base, finished_month: thisMonth }, signal),
+            fetchOrders({ ...base, finished_month: lastMonth }, signal),
+            fetchOrders(
+              { ...base, status: "Completed Settlement", start_time: settledRangeObj.start, end_time: settledRangeObj.end },
+              signal,
+            ),
+            fetchOrders(
+              { ...base, status: "Invalid", start_time: canceledRangeObj.start, end_time: canceledRangeObj.end },
+              signal,
+            ),
+          ]);
 
-  React.useEffect(() => {
+        // Abort was triggered — do not update state
+        if (signal.aborted) return;
+
+        const paid =
+          paidRes.status === "fulfilled" ? paidRes.value : { orders: [], total_record_count: 0 };
+        const paidThisMonth =
+          paidThisMonthRes.status === "fulfilled"
+            ? paidThisMonthRes.value
+            : { orders: [], total_record_count: 0 };
+        const thisM =
+          thisMonthRes.status === "fulfilled" ? thisMonthRes.value : { orders: [], total_record_count: 0 };
+        const lastM =
+          lastMonthRes.status === "fulfilled" ? lastMonthRes.value : { orders: [], total_record_count: 0 };
+        const settled =
+          settledRes.status === "fulfilled" ? settledRes.value : { orders: [], total_record_count: 0 };
+        const canceled =
+          canceledRes.status === "fulfilled" ? canceledRes.value : { orders: [], total_record_count: 0 };
+
+        const nextData: DashboardData = {
+          paid: { count: paid.total_record_count, commission: sumCommission(paid.orders) },
+          paidThisMonth: {
+            count: paidThisMonth.total_record_count,
+            commission: sumCommission(paidThisMonth.orders),
+          },
+          receivedThisMonth: {
+            count: thisM.total_record_count,
+            commission: sumCommission(thisM.orders),
+          },
+          receivedLastMonth: {
+            count: lastM.total_record_count,
+            commission: sumCommission(lastM.orders),
+          },
+          settled: { count: settled.total_record_count, commission: sumCommission(settled.orders) },
+          canceled: {
+            count: canceled.total_record_count,
+            commission: sumCommission(canceled.orders),
+          },
+        };
+
+        setData(nextData);
+        setLastUpdated(new Date());
+
+        // Persist locally for next app launch
+        saveDashboardData(nextData);
+      } catch {
+        if (!signal.aborted) {
+          setError(t("dashboard.error"));
+        }
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
+      }
+    },
+    [settings, isConfigured, clearSavedDashboardData, saveDashboardData],
+  );
+
+  const loadSettledStat = useCallback(
+    async (range: RangePeriod) => {
+      if (!isConfigured) return;
+      setIsLoadingSettled(true);
+      const rangeObj = getRangeByPeriod(RANGE_DAYS[range]);
+      try {
+        const res = await fetchOrders({
+          app_key: settings.app_key,
+          app_secret: settings.app_secret,
+          page_size: 50,
+          status: "Completed Settlement",
+          start_time: rangeObj.start,
+          end_time: rangeObj.end,
+        });
+        setData((prev) => ({
+          ...prev,
+          settled: { count: res.total_record_count, commission: sumCommission(res.orders) },
+        }));
+      } catch {
+        setData((prev) => ({ ...prev, settled: { count: 0, commission: 0 } }));
+      } finally {
+        setIsLoadingSettled(false);
+      }
+    },
+    [settings, isConfigured],
+  );
+
+  const loadCanceledStat = useCallback(
+    async (range: RangePeriod) => {
+      if (!isConfigured) return;
+      setIsLoadingCanceled(true);
+      const rangeObj = getRangeByPeriod(RANGE_DAYS[range]);
+      try {
+        const res = await fetchOrders({
+          app_key: settings.app_key,
+          app_secret: settings.app_secret,
+          page_size: 50,
+          status: "Invalid",
+          start_time: rangeObj.start,
+          end_time: rangeObj.end,
+        });
+        setData((prev) => ({
+          ...prev,
+          canceled: { count: res.total_record_count, commission: sumCommission(res.orders) },
+        }));
+      } catch {
+        setData((prev) => ({ ...prev, canceled: { count: 0, commission: 0 } }));
+      } finally {
+        setIsLoadingCanceled(false);
+      }
+    },
+    [settings, isConfigured],
+  );
+
+  // On mount: restore saved card values immediately, clean stale order cache, then fetch fresh
+  useEffect(() => {
+    loadSavedDashboardData();
+    cleanExpiredCache();
+  }, []);
+
+  useEffect(() => {
     loadDashboard();
+    // Cleanup: abort the in-flight request if the component unmounts
+    return () => {
+      dashboardAbortRef.current?.abort();
+    };
   }, [loadDashboard]);
 
   const handleSettledRangeSelect = (range: RangePeriod) => {
@@ -310,7 +441,8 @@ export default function DashboardScreen() {
 
         {lastUpdated && (
           <Text style={[styles.lastUpdated, { textAlign }]}>
-            {t("dashboard.updated")} {lastUpdated.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+            {t("dashboard.updated")}{" "}
+            {lastUpdated.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
           </Text>
         )}
 
@@ -338,76 +470,102 @@ export default function DashboardScreen() {
             subValue={data.paid.commission > 0 ? `$${data.paid.commission.toFixed(2)}` : "—"}
             isRTL={isRTL}
             badge={t("stat.all")}
-            onPress={() => router.push({
-              pathname: "/orders-list",
-              params: {
-                title: `${t("stat.paidPending")} · ${t("stat.all")}`,
-                status: "Payment Completed",
-                startTime: pendingRange.start,
-                endTime: pendingRange.end,
-                timeType: "1",
-                emptyLabel: t("orders.empty"),
-              },
-            })}
+            onPress={() =>
+              router.push({
+                pathname: "/orders-list",
+                params: {
+                  title: `${t("stat.paidPending")} · ${t("stat.all")}`,
+                  status: "Payment Completed",
+                  startTime: pendingRange.start,
+                  endTime: pendingRange.end,
+                  timeType: "1",
+                  emptyLabel: t("orders.empty"),
+                },
+              })
+            }
           />
           <StatCard
             label={t("stat.paidPendingThisMonth")}
             value={data.paidThisMonth.count}
             color={colors.info}
             subLabel={t("stat.estCommission")}
-            subValue={data.paidThisMonth.commission > 0 ? `$${data.paidThisMonth.commission.toFixed(2)}` : "—"}
+            subValue={
+              data.paidThisMonth.commission > 0
+                ? `$${data.paidThisMonth.commission.toFixed(2)}`
+                : "—"
+            }
             isRTL={isRTL}
             badge={t("stat.thisMonth")}
-            onPress={() => router.push({
-              pathname: "/orders-list",
-              params: {
-                title: `${t("stat.paidPendingThisMonth")} · ${t("stat.thisMonth")}`,
-                status: "Payment Completed",
-                startTime: currentMonthRange.start,
-                endTime: currentMonthRange.end,
-                timeType: "1",
-                emptyLabel: t("orders.empty"),
-              },
-            })}
+            onPress={() =>
+              router.push({
+                pathname: "/orders-list",
+                params: {
+                  title: `${t("stat.paidPendingThisMonth")} · ${t("stat.thisMonth")}`,
+                  status: "Payment Completed",
+                  startTime: currentMonthRange.start,
+                  endTime: currentMonthRange.end,
+                  timeType: "1",
+                  emptyLabel: t("orders.empty"),
+                },
+              })
+            }
           />
           <StatCard
             label={t("stat.receivedThisMonth")}
             value={data.receivedThisMonth.count}
             color={colors.success}
             subLabel={t("stat.estCommission")}
-            subValue={data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
+            subValue={
+              data.receivedThisMonth.commission > 0
+                ? `$${data.receivedThisMonth.commission.toFixed(2)}`
+                : "—"
+            }
             isRTL={isRTL}
-            onPress={() => router.push({
-              pathname: "/orders-list",
-              params: {
-                title: t("stat.receivedThisMonth"),
-                finishedMonth: thisMonthStr,
-                emptyLabel: t("orders.empty"),
-              },
-            })}
+            onPress={() =>
+              router.push({
+                pathname: "/orders-list",
+                params: {
+                  title: t("stat.receivedThisMonth"),
+                  finishedMonth: thisMonthStr,
+                  emptyLabel: t("orders.empty"),
+                },
+              })
+            }
           />
           <StatCard
             label={t("stat.receivedLastMonth")}
             value={data.receivedLastMonth.count}
             color={colors.primary}
             subLabel={t("stat.estCommission")}
-            subValue={data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
+            subValue={
+              data.receivedLastMonth.commission > 0
+                ? `$${data.receivedLastMonth.commission.toFixed(2)}`
+                : "—"
+            }
             isRTL={isRTL}
-            onPress={() => router.push({
-              pathname: "/orders-list",
-              params: {
-                title: t("stat.receivedLastMonth"),
-                finishedMonth: lastMonthStr,
-                emptyLabel: t("orders.empty"),
-              },
-            })}
+            onPress={() =>
+              router.push({
+                pathname: "/orders-list",
+                params: {
+                  title: t("stat.receivedLastMonth"),
+                  finishedMonth: lastMonthStr,
+                  emptyLabel: t("orders.empty"),
+                },
+              })
+            }
           />
           <StatCard
             label={t("stat.settledOrders")}
             value={isLoadingSettled ? "…" : data.settled.count}
             color={colors.accent}
             subLabel={t("stat.settledCommission")}
-            subValue={isLoadingSettled ? "…" : data.settled.commission > 0 ? `$${data.settled.commission.toFixed(2)}` : "—"}
+            subValue={
+              isLoadingSettled
+                ? "…"
+                : data.settled.commission > 0
+                  ? `$${data.settled.commission.toFixed(2)}`
+                  : "—"
+            }
             isRTL={isRTL}
             rangeLabel={getRangeLabel(settledRange)}
             onRangePress={() => setShowDropdown("settled")}
@@ -431,7 +589,13 @@ export default function DashboardScreen() {
             value={isLoadingCanceled ? "…" : data.canceled.count}
             color={colors.danger}
             subLabel={t("stat.commission")}
-            subValue={isLoadingCanceled ? "…" : data.canceled.commission > 0 ? `$${data.canceled.commission.toFixed(2)}` : "—"}
+            subValue={
+              isLoadingCanceled
+                ? "…"
+                : data.canceled.commission > 0
+                  ? `$${data.canceled.commission.toFixed(2)}`
+                  : "—"
+            }
             isRTL={isRTL}
             rangeLabel={getRangeLabel(canceledRange)}
             onRangePress={() => setShowDropdown("canceled")}
@@ -465,26 +629,38 @@ export default function DashboardScreen() {
             <View style={styles.commissionItem}>
               <Text style={styles.commissionLabel}>{t("commission.summary.thisMonth")}</Text>
               <Text style={[styles.commissionValue, { color: colors.success }]}>
-                {data.receivedThisMonth.commission > 0 ? `$${data.receivedThisMonth.commission.toFixed(2)}` : "—"}
+                {data.receivedThisMonth.commission > 0
+                  ? `$${data.receivedThisMonth.commission.toFixed(2)}`
+                  : "—"}
               </Text>
             </View>
             <View style={styles.commissionDivider} />
             <View style={styles.commissionItem}>
               <Text style={styles.commissionLabel}>{t("commission.summary.lastMonth")}</Text>
               <Text style={[styles.commissionValue, { color: colors.primary }]}>
-                {data.receivedLastMonth.commission > 0 ? `$${data.receivedLastMonth.commission.toFixed(2)}` : "—"}
+                {data.receivedLastMonth.commission > 0
+                  ? `$${data.receivedLastMonth.commission.toFixed(2)}`
+                  : "—"}
               </Text>
             </View>
           </View>
         </View>
 
-        <TouchableOpacity style={styles.telegramLink} onPress={() => Linking.openURL("https://t.me/aliaffiliate213")}>
+        <TouchableOpacity
+          style={styles.telegramLink}
+          onPress={() => Linking.openURL("https://t.me/aliaffiliate213")}
+        >
           <FontAwesome5 name="telegram" size={22} color="#229ED9" />
           <Text style={styles.telegramText}>{t("social.followTelegram")}</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      <Modal transparent visible={showDropdown !== null} animationType="fade" onRequestClose={() => setShowDropdown(null)}>
+      <Modal
+        transparent
+        visible={showDropdown !== null}
+        animationType="fade"
+        onRequestClose={() => setShowDropdown(null)}
+      >
         <TouchableWithoutFeedback onPress={() => setShowDropdown(null)}>
           <View style={styles.modalOverlay}>
             <TouchableWithoutFeedback>
@@ -493,14 +669,28 @@ export default function DashboardScreen() {
                   {showDropdown === "settled" ? t("stat.settledOrders") : t("stat.canceledOrders")}
                 </Text>
                 {RANGE_OPTIONS.map((opt) => {
-                  const isSelected = showDropdown === "settled" ? settledRange === opt.key : canceledRange === opt.key;
+                  const isSelected =
+                    showDropdown === "settled"
+                      ? settledRange === opt.key
+                      : canceledRange === opt.key;
                   return (
                     <Pressable
                       key={opt.key}
                       style={[styles.dropdownOption, isSelected && styles.dropdownOptionSelected]}
-                      onPress={() => showDropdown === "settled" ? handleSettledRangeSelect(opt.key) : handleCanceledRangeSelect(opt.key)}
+                      onPress={() =>
+                        showDropdown === "settled"
+                          ? handleSettledRangeSelect(opt.key)
+                          : handleCanceledRangeSelect(opt.key)
+                      }
                     >
-                      <Text style={[styles.dropdownOptionText, isSelected && styles.dropdownOptionTextSelected]}>{opt.label}</Text>
+                      <Text
+                        style={[
+                          styles.dropdownOptionText,
+                          isSelected && styles.dropdownOptionTextSelected,
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
                       {isSelected && <Feather name="check" size={16} color={colors.primary} />}
                     </Pressable>
                   );
